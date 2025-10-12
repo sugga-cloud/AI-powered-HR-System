@@ -12,13 +12,13 @@ import {
 
 const router = Router();
 
-// Skills management routes - v1
-router.post('/v1/skills', /* authMiddleware, */ createSkill);
-router.get('/v1/skills', /* authMiddleware, */ getAllSkills);
-router.get('/v1/skills/:id', /* authMiddleware, */ getSkillById);
-router.put('/v1/skills/:id', /* authMiddleware, */ updateSkill);
-router.get('/v1/skills/search/:term', /* authMiddleware, */ searchSkills);
-router.get('/v1/skills/popular', /* authMiddleware, */ getPopularSkills);
-router.post('/v1/skills/batch', /* authMiddleware, */ batchUpdateSkills);
+// Skills management routes
+router.post('/skills', /* authMiddleware, */ createSkill);
+router.get('/skills', /* authMiddleware, */ getAllSkills);
+router.get('/skills/:id', /* authMiddleware, */ getSkillById);
+router.put('/skills/:id', /* authMiddleware, */ updateSkill);
+router.get('/skills/search/:term', /* authMiddleware, */ searchSkills);
+router.get('/skills/popular', /* authMiddleware, */ getPopularSkills);
+router.post('/skills/batch', /* authMiddleware, */ batchUpdateSkills);
 
 export default router;

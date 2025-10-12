@@ -15,9 +15,6 @@ export const MONGODB_URI = process.env.MONGODB_URI || DEFAULT_URI;
 // Connection options recommended for mongoose
 const DEFAULT_OPTIONS = {
 	dbName: process.env.MONGODB_DB || undefined,
-	// Mongoose 6+ uses sensible defaults; options left for override
-	useNewUrlParser: true,
-	useUnifiedTopology: true,
 };
 
 let isConnected = false;

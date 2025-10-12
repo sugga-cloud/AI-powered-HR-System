@@ -15,20 +15,20 @@ import {
 
 const router = Router();
 
-// Job Requisition routes - v1
-router.post('/v1/requisitions', /* authMiddleware, */ createRequisition);
-router.get('/v1/requisitions', /* authMiddleware, */ getAllRequisitions);
-router.get('/v1/requisitions/:id', /* authMiddleware, */ getRequisitionById);
-router.put('/v1/requisitions/:id', /* authMiddleware, */ updateRequisition);
-router.delete('/v1/requisitions/:id', /* authMiddleware, */ deleteRequisition);
+// Job Requisition routes
+router.post('/requisitions', /* authMiddleware, */ createRequisition);
+router.get('/requisitions', /* authMiddleware, */ getAllRequisitions);
+router.get('/requisitions/:id', /* authMiddleware, */ getRequisitionById);
+router.put('/requisitions/:id', /* authMiddleware, */ updateRequisition);
+router.delete('/requisitions/:id', /* authMiddleware, */ deleteRequisition);
 
-// Approval chain routes - v1
-router.post('/v1/requisitions/:id/approve', /* authMiddleware, */ approveRequisition);
-router.post('/v1/requisitions/:id/reject', /* authMiddleware, */ rejectRequisition);
+// Approval chain routes
+router.post('/requisitions/:id/approve', /* authMiddleware, */ approveRequisition);
+router.post('/requisitions/:id/reject', /* authMiddleware, */ rejectRequisition);
 
-// Search routes - v1
-router.get('/v1/requisitions/search/text', /* authMiddleware, */ searchRequisitions);
-router.get('/v1/requisitions/manager/:managerId', /* authMiddleware, */ getRequisitionsByManager);
-router.get('/v1/requisitions/status/:status', /* authMiddleware, */ getRequisitionsByStatus);
+// Search routes
+router.get('/requisitions/search/text', /* authMiddleware, */ searchRequisitions);
+router.get('/requisitions/manager/:managerId', /* authMiddleware, */ getRequisitionsByManager);
+router.get('/requisitions/status/:status', /* authMiddleware, */ getRequisitionsByStatus);
 
 export default router;

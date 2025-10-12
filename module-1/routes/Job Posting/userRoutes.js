@@ -12,11 +12,11 @@ import {
 const router = Router();
 
 // User management routes - v1
-router.post('/v1/users', /* authMiddleware, */ createUser);
-router.get('/v1/users', /* authMiddleware, */ getAllUsers);
-router.get('/v1/users/:id', /* authMiddleware, */ getUserById);
-router.put('/v1/users/:id', /* authMiddleware, */ updateUser);
-router.get('/v1/users/role/:role', /* authMiddleware, */ getUsersByRole);
-router.get('/v1/users/department/:department', /* authMiddleware, */ getUsersByDepartment);
+router.post('/users', /* authMiddleware, */ createUser);
+router.get('/users', /* authMiddleware, */ getAllUsers);
+router.get('/users/:id', /* authMiddleware, */ getUserById);
+router.put('/users/:id', /* authMiddleware, */ updateUser);
+router.get('/users/role/:role', /* authMiddleware, */ getUsersByRole);
+router.get('/users/department/:department', /* authMiddleware, */ getUsersByDepartment);
 
 export default router;

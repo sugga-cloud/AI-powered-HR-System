@@ -1,18 +1,18 @@
 import express from 'express';
 import { Router } from 'express';
-import userRoutes from './userRoutes';
-import jobRequisitionRoutes from './jobRequisitionRoutes';
-import aiRoutes from './aiRoutes';
-import jobPostingRoutes from './jobPostingRoutes';
-import skillRoutes from './skillRoutes';
+import userRoutes from './userRoutes.js';
+import jobRequisitionRoutes from './jobRequisitionRoutes.js';
+import aiRoutes from './aiRoutes.js';
+import jobPostingRoutes from './jobPostingRoutes.js';
+import skillRoutes from './skillRoutes.js';
 
 const router = Router();
 
 // Mount all routes
-router.use('/api/v1', userRoutes);
-router.use('/api/v1', jobRequisitionRoutes);
-router.use('/api/v1', aiRoutes);
-router.use('/api/v1', jobPostingRoutes);
-router.use('/api/v1', skillRoutes);
+router.use('/', userRoutes);
+router.use('/', jobRequisitionRoutes);
+router.use('/', aiRoutes);
+router.use('/', jobPostingRoutes);
+router.use('/', skillRoutes);
 
 export default router;
