@@ -275,6 +275,103 @@
       "name": "Skills",
       "item": [
         {
+          "name": "Get Skill Recommendations",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{authToken}}"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"jobTitle\": \"Senior Software Engineer\",\n  \"description\": \"We are looking for an experienced software engineer...\",\n  \"industry\": \"Technology\",\n  \"experienceLevel\": \"senior\",\n  \"existingSkills\": [\"skill1Id\", \"skill2Id\"]\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/skills/recommendations",
+              "host": ["{{baseUrl}}"],
+              "path": ["skills", "recommendations"]
+            }
+          }
+        },
+        {
+          "name": "Analyze Skills Gap",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{authToken}}"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"currentSkills\": [\"skill1Id\", \"skill2Id\"],\n  \"targetRole\": \"Lead Developer\",\n  \"targetLevel\": \"senior\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/skills/gap-analysis",
+              "host": ["{{baseUrl}}"],
+              "path": ["skills", "gap-analysis"]
+            }
+          }
+        },
+        {
+          "name": "Update Skill Metrics",
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{authToken}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/skills/metrics",
+              "host": ["{{baseUrl}}"],
+              "path": ["skills", "metrics"]
+            }
+          }
+        },
+        {
+          "name": "Get Skill Insights",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{authToken}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/skills/:skillId/insights",
+              "host": ["{{baseUrl}}"],
+              "path": ["skills", ":skillId", "insights"],
+              "query": [
+                {
+                  "key": "timeframe",
+                  "value": "6m",
+                  "description": "Timeframe for historical data (1m, 3m, 6m, 1y)"
+                }
+              ],
+              "variable": [
+                {
+                  "key": "skillId",
+                  "value": "skill_id"
+                }
+              ]
+            }
+          }
+        },
+        {
           "name": "Create Skill",
           "request": {
             "method": "POST",

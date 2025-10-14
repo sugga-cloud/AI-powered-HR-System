@@ -25,8 +25,7 @@ export const processJobRequisition = async (req, res) => {
             model_version: process.env.AI_MODEL_VERSION || '1.0'
         });
 
-        // TODO: Integrate with actual AI processing service
-        // This is a placeholder for AI processing logic
+        // Process with OpenAI
         const aiOutput = await processWithAI(req.body.input, stage);
 
         processingLog.output_data = aiOutput;
@@ -123,8 +122,7 @@ export const regenerateJobPredictions = async (req, res) => {
             return res.status(404).json({ message: 'Job requisition not found' });
         }
 
-        // TODO: Integrate with actual AI prediction service
-        // This is a placeholder for AI prediction regeneration
+        // Generate new AI predictions using OpenAI
         const newPredictions = await generateNewPredictions(job);
 
         // Update or create new predictions
@@ -284,18 +282,52 @@ export const analyzePostingEffectiveness = async (req, res) => {
 
 // Helper function to get posting metrics
 async function getPostingMetrics(jobId) {
-    // Implement actual metrics gathering logic
-    return {
-        activeDays: 30,
-        views: 1000,
-        applications: 50,
-        clickRate: 5.2,
-        channelBreakdown: {
-            linkedin: { views: 600, applications: 30 },
-            indeed: { views: 400, applications: 20 }
+    try {
+        // Get job posting analytics from database
+        const posting = await JobRequisition.findById(jobId)
+            .populate('analytics')
+            .populate('applications');
+
+        if (!posting) {
+            throw new Error('Job posting not found');
         }
-    };
-}
+
+        const analytics = posting.analytics || {};
+        const applications = posting.applications || [];
+
+        // Calculate metrics
+        const now = new Date();
+        const createdAt = posting.created_at;
+        const activeDays = Math.ceil((now - createdAt) / (1000 * 60 * 60 * 24));
+
+        const channelBreakdown = {};
+        posting.channels.forEach(channel => {
+            const channelViews = analytics[`${channel}_views`] || 0;
+            const channelApps = applications.filter(app => app.source === channel).length;
+
+            channelBreakdown[channel] = {
+                views: channelViews,
+                applications: channelApps
+            };
+        });
+
+        const totalViews = Object.values(channelBreakdown)
+            .reduce((sum, channel) => sum + channel.views, 0);
+        const totalApplications = applications.length;
+        const clickRate = totalViews > 0 ? (totalApplications / totalViews) * 100 : 0;
+
+        return {
+            activeDays,
+            views: totalViews,
+            applications: totalApplications,
+            clickRate: parseFloat(clickRate.toFixed(2)),
+            channelBreakdown
+        };
+    } catch (error) {
+        console.error('Error getting posting metrics:', error);
+        throw error;
+    }
+};
 
 // Helper function to extract recommendations
 function extractRecommendations(analysis) {
