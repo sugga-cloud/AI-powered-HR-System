@@ -16,7 +16,7 @@ app.use(express.json());
 app.use(cookieParser());
 
 // Base route
-app.get("/", (req, res) => res.send("AI HR Backend Running ✅"));
+app.get("/Healthz", (req, res) => res.send("AI HR Backend Running ✅"));
 
 // Auth Routes
 app.use("/auth", authRoutes);
