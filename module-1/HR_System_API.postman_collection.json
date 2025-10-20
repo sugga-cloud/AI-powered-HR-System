@@ -1,0 +1,554 @@
+{
+  "info": {
+    "_postman_id": "e8ea9c34-5f12-4c2b-8d1e-9b0f51b3d6f8",
+    "name": "AI-powered HR System API",
+    "description": "Collection of API endpoints for the AI-powered HR System",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "item": [
+    {
+      "name": "Job Requisitions",
+      "item": [
+        {
+          "name": "Create Job Requisition",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"title\": \"Senior Software Engineer\",\n  \"department\": \"Engineering\",\n  \"jobType\": \"Full-time\",\n  \"location\": \"Remote\",\n  \"requirements\": [\"5+ years experience\", \"Node.js\", \"React\"],\n  \"responsibilities\": [\"Lead development team\", \"Architect solutions\"],\n  \"salary\": { \"min\": 100000, \"max\": 150000, \"currency\": \"USD\" },\n  \"deadline\": \"2025-12-31\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/requisitions",
+              "host": ["{{baseUrl}}"],
+              "path": ["requisitions"]
+            }
+          }
+        },
+        {
+          "name": "Get All Job Requisitions",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/requisitions",
+              "host": ["{{baseUrl}}"],
+              "path": ["requisitions"]
+            }
+          }
+        },
+        {
+          "name": "Get Job Requisition by ID",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/requisitions/:id",
+              "host": ["{{baseUrl}}"],
+              "path": ["requisitions", ":id"],
+              "variable": [
+                {
+                  "key": "id",
+                  "value": "job_requisition_id"
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Update Job Requisition",
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"title\": \"Senior Software Engineer\",\n  \"requirements\": [\"6+ years experience\", \"Node.js\", \"React\", \"AWS\"],\n  \"salary\": { \"min\": 110000, \"max\": 160000, \"currency\": \"USD\" }\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/requisitions/:id",
+              "host": ["{{baseUrl}}"],
+              "path": ["requisitions", ":id"],
+              "variable": [
+                {
+                  "key": "id",
+                  "value": "job_requisition_id"
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Delete Job Requisition",
+          "request": {
+            "method": "DELETE",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/requisitions/:id",
+              "host": ["{{baseUrl}}"],
+              "path": ["requisitions", ":id"],
+              "variable": [
+                {
+                  "key": "id",
+                  "value": "job_requisition_id"
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Approve Job Requisition",
+          "request": {
+            "method": "POST",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/requisitions/:id/approve",
+              "host": ["{{baseUrl}}"],
+              "path": ["requisitions", ":id", "approve"],
+              "variable": [
+                {
+                  "key": "id",
+                  "value": "job_requisition_id"
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Reject Job Requisition",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"reason\": \"Not enough relevant experience\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/requisitions/:id/reject",
+              "host": ["{{baseUrl}}"],
+              "path": ["requisitions", ":id", "reject"],
+              "variable": [
+                {
+                  "key": "id",
+                  "value": "job_requisition_id"
+                }
+              ]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "Job Postings",
+      "item": [
+        {
+          "name": "Create Job Posting",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"requisitionId\": \"requisition_id\",\n  \"status\": \"active\",\n  \"publicTitle\": \"Join Our Engineering Team - Senior Software Engineer\",\n  \"description\": \"We are looking for a passionate Senior Software Engineer...\",\n  \"applicationDeadline\": \"2025-12-31\",\n  \"channels\": [\"company-website\", \"linkedin\", \"indeed\"]\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/postings",
+              "host": ["{{baseUrl}}"],
+              "path": ["postings"]
+            }
+          }
+        },
+        {
+          "name": "Get All Job Postings",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/postings",
+              "host": ["{{baseUrl}}"],
+              "path": ["postings"]
+            }
+          }
+        },
+        {
+          "name": "Get Job Posting by ID",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/postings/:id",
+              "host": ["{{baseUrl}}"],
+              "path": ["postings", ":id"],
+              "variable": [
+                {
+                  "key": "id",
+                  "value": "job_posting_id"
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Update Job Posting Status",
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"status\": \"paused\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/postings/:id",
+              "host": ["{{baseUrl}}"],
+              "path": ["postings", ":id"],
+              "variable": [
+                {
+                  "key": "id",
+                  "value": "job_posting_id"
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Delete Job Posting",
+          "request": {
+            "method": "DELETE",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/postings/:id",
+              "host": ["{{baseUrl}}"],
+              "path": ["postings", ":id"],
+              "variable": [
+                {
+                  "key": "id",
+                  "value": "job_posting_id"
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Get Posting Metrics",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/postings/:id/metrics",
+              "host": ["{{baseUrl}}"],
+              "path": ["postings", ":id", "metrics"],
+              "variable": [
+                {
+                  "key": "id",
+                  "value": "job_posting_id"
+                }
+              ]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "Skills",
+      "item": [
+        {
+          "name": "Get Skill Recommendations",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{authToken}}"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"jobTitle\": \"Senior Software Engineer\",\n  \"description\": \"We are looking for an experienced software engineer...\",\n  \"industry\": \"Technology\",\n  \"experienceLevel\": \"senior\",\n  \"existingSkills\": [\"skill1Id\", \"skill2Id\"]\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/skills/recommendations",
+              "host": ["{{baseUrl}}"],
+              "path": ["skills", "recommendations"]
+            }
+          }
+        },
+        {
+          "name": "Analyze Skills Gap",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{authToken}}"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"currentSkills\": [\"skill1Id\", \"skill2Id\"],\n  \"targetRole\": \"Lead Developer\",\n  \"targetLevel\": \"senior\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/skills/gap-analysis",
+              "host": ["{{baseUrl}}"],
+              "path": ["skills", "gap-analysis"]
+            }
+          }
+        },
+        {
+          "name": "Update Skill Metrics",
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{authToken}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/skills/metrics",
+              "host": ["{{baseUrl}}"],
+              "path": ["skills", "metrics"]
+            }
+          }
+        },
+        {
+          "name": "Get Skill Insights",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{authToken}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/skills/:skillId/insights",
+              "host": ["{{baseUrl}}"],
+              "path": ["skills", ":skillId", "insights"],
+              "query": [
+                {
+                  "key": "timeframe",
+                  "value": "6m",
+                  "description": "Timeframe for historical data (1m, 3m, 6m, 1y)"
+                }
+              ],
+              "variable": [
+                {
+                  "key": "skillId",
+                  "value": "skill_id"
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Create Skill",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"Node.js\",\n  \"category\": \"Technical\",\n  \"description\": \"Experience with Node.js runtime and ecosystem\",\n  \"keywords\": [\"javascript\", \"backend\", \"server-side\"]\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/skills",
+              "host": ["{{baseUrl}}"],
+              "path": ["skills"]
+            }
+          }
+        },
+        {
+          "name": "Get All Skills",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/skills",
+              "host": ["{{baseUrl}}"],
+              "path": ["skills"]
+            }
+          }
+        },
+        {
+          "name": "Get Skill by ID",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/skills/:id",
+              "host": ["{{baseUrl}}"],
+              "path": ["skills", ":id"],
+              "variable": [
+                {
+                  "key": "id",
+                  "value": "skill_id"
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Update Skill",
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"description\": \"Extensive experience with Node.js runtime and its ecosystem\",\n  \"keywords\": [\"javascript\", \"backend\", \"server-side\", \"express\", \"npm\"]\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/skills/:id",
+              "host": ["{{baseUrl}}"],
+              "path": ["skills", ":id"],
+              "variable": [
+                {
+                  "key": "id",
+                  "value": "skill_id"
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Delete Skill",
+          "request": {
+            "method": "DELETE",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/skills/:id",
+              "host": ["{{baseUrl}}"],
+              "path": ["skills", ":id"],
+              "variable": [
+                {
+                  "key": "id",
+                  "value": "skill_id"
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Get Popular Skills",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/skills/popular",
+              "host": ["{{baseUrl}}"],
+              "path": ["skills", "popular"]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "AI Processing",
+      "item": [
+        {
+          "name": "Process Job Requisition (AI)",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"jobId\": \"job_requisition_id\",\n  \"processType\": \"skill_extraction\",\n  \"inputData\": { \"text\": \"Job description text...\" }\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/ai/process",
+              "host": ["{{baseUrl}}"],
+              "path": ["ai", "process"]
+            }
+          }
+        },
+        {
+          "name": "Get Job Processing Logs",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/ai/logs/:jobId",
+              "host": ["{{baseUrl}}"],
+              "path": ["ai", "logs", ":jobId"],
+              "variable": [
+                {
+                  "key": "jobId",
+                  "value": "job_requisition_id"
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Get Job Predictions",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/ai/predictions/:jobId",
+              "host": ["{{baseUrl}}"],
+              "path": ["ai", "predictions", ":jobId"],
+              "variable": [
+                {
+                  "key": "jobId",
+                  "value": "job_requisition_id"
+                }
+              ]
+            }
+          }
+        }
+      ]
+    }
+  ],
+  "variable": [
+    {
+      "key": "baseUrl",
+      "value": "http://localhost:3000",
+      "type": "string"
+    }
+  ]
+}

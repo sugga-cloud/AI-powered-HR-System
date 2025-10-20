@@ -19,6 +19,6 @@ app.use(cookieParser());
 app.get("/Healthz", (req, res) => res.send("AI HR Backend Running ✅"));
 
 // Auth Routes
-app.use("/auth", authRoutes);
+app.use("/api/auth", authRoutes);
 
 module.exports = app;
