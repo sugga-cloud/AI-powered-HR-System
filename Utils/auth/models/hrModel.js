@@ -11,4 +11,4 @@ const hrSchema = new mongoose.Schema(
   { timestamps: true }
 );
 
-module.exports = mongoose.model("Hr", hrSchema);
+module.exports = mongoose.model("HR", hrSchema);

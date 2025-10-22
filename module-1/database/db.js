@@ -9,7 +9,7 @@
 
 import mongoose from 'mongoose';
 
-const DEFAULT_URI = 'mongodb+srv://root:152155170185190@aihrcluster.o4l8jnc.mongodb.net/?retryWrites=true&w=majority&appName=AIHRCluster';
+const DEFAULT_URI = 'mongodb+srv://root:152155170185190@aihrcluster.o4l8jnc.mongodb.net/AIHRDB?retryWrites=true&w=majority&appName=AIHRCluster';
 export const MONGODB_URI = process.env.MONGODB_URI || DEFAULT_URI;
 
 // Connection options recommended for mongoose

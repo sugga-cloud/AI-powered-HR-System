@@ -1,8 +1,7 @@
 import express from 'express';
 import { connectToDatabase } from './database/db.js';
 import cors from 'cors';
-import jobPostingRoutes from './routes/Job Posting/index.js';
-
+import apiRouter from './routes/api.js';
 const app = express();
 const PORT = process.env.PORT || 3000;
 
@@ -15,7 +14,8 @@ app.use(express.urlencoded({ extended: true }));
 await connectToDatabase();
 
 // Routes
-app.use('/api/v1', jobPostingRoutes);
+app.use('/api', apiRouter);
+
 
 // Basic error handling
 app.use((err, req, res, next) => {
@@ -24,7 +24,7 @@ app.use((err, req, res, next) => {
 });
 
 // Basic Route for testing
-app.get('/', (req, res) => {
+app.get('/healthz', (req, res) => {
     res.send('HR System API is running!');
 });
 
