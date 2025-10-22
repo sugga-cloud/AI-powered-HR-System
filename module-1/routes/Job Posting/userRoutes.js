@@ -12,8 +12,8 @@ import {
     getUsersByRole,
     getUsersByDepartment
 } from '../../controllers/Job Posting/v1/userController.js';
-import { authenticate, authorize, requireRole } from '../../../middleware/auth.js';
-import { logActivity } from '../../../utils/activityLogger.js';
+import { authenticate, authorize, requireRole } from '../../middleware/auth.js';
+import { logActivity } from '../../utils/activityLogger.js';
 
 const router = express.Router();
 

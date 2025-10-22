@@ -1,16 +1,15 @@
 import AIProcessingLog from '../../../models/Job Posting/AIProcessingLog.js';
 import AIPrediction from '../../../models/Job Posting/AIPrediction.js';
 import JobRequisition from '../../../models/Job Posting/JobRequisition.js';
-import { Configuration, OpenAIApi } from 'openai';
+import OpenAI from 'openai';
 import dotenv from 'dotenv';
 
 dotenv.config();
 
 // Initialize OpenAI
-const configuration = new Configuration({
+const openai = new OpenAI({
     apiKey: process.env.OPENAI_API_KEY
 });
-const openai = new OpenAIApi(configuration);
 
 // Process job requisition with AI
 export const processJobRequisition = async (req, res) => {
@@ -156,14 +155,14 @@ export const generateTitleSuggestions = async (req, res) => {
             4. Attractive to candidates
             Include a brief explanation for each suggestion.`;
 
-        const completion = await openai.createCompletion({
-            model: "text-davinci-003",
+        const completion = await openai.completions.create({
+            model: "gpt-3.5-turbo-instruct",
             prompt,
             max_tokens: 500,
             temperature: 0.7
         });
 
-        const suggestions = completion.data.choices[0].text.trim();
+        const suggestions = completion.choices[0].text.trim();
 
         res.json({
             success: true,
@@ -203,14 +202,14 @@ export const generateScreeningQuestions = async (req, res) => {
             - Difficulty (1-5)
             - Assessment criteria`;
 
-        const completion = await openai.createCompletion({
-            model: "text-davinci-003",
+        const completion = await openai.completions.create({
+            model: "gpt-3.5-turbo-instruct",
             prompt,
             max_tokens: 1000,
             temperature: 0.7
         });
 
-        const questions = completion.data.choices[0].text.trim();
+        const questions = completion.choices[0].text.trim();
 
         res.json({
             success: true,
@@ -257,14 +256,14 @@ export const analyzePostingEffectiveness = async (req, res) => {
             4. Channel performance
             5. Optimization suggestions`;
 
-        const completion = await openai.createCompletion({
-            model: "text-davinci-003",
+        const completion = await openai.completions.create({
+            model: "gpt-3.5-turbo-instruct",
             prompt,
             max_tokens: 800,
             temperature: 0.7
         });
 
-        const analysis = completion.data.choices[0].text.trim();
+        const analysis = completion.choices[0].text.trim();
 
         res.json({
             success: true,
@@ -406,14 +405,14 @@ async function processWithAI(input, stage) {
             break;
     }
 
-    const completion = await openai.createCompletion({
-        model: "text-davinci-003",
+    const completion = await openai.completions.create({
+        model: "gpt-3.5-turbo-instruct",
         prompt,
         max_tokens: 1000,
         temperature: 0.7
     });
 
-    const output = completion.data.choices[0].text.trim();
+    const output = completion.choices[0].text.trim();
 
     return {
         confidence: calculateConfidence(output),
@@ -462,8 +461,8 @@ async function generateNewPredictions(job) {
         4. Salary range competitiveness
         5. Potential hiring challenges`;
 
-    const completion = await openai.createCompletion({
-        model: "text-davinci-003",
+    const completion = await openai.completions.create({
+        model: "gpt-3.5-turbo-instruct",
         prompt,
         max_tokens: 800,
         temperature: 0.7

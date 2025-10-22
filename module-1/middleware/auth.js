@@ -1,26 +1,31 @@
-import jwt from 'jsonwebtoken';
-import User from '../models/Job Posting/User.js';
+import axios from 'axios';
 
 export const authenticate = async (req, res, next) => {
     try {
         const token = req.header('Authorization')?.replace('Bearer ', '');
-        
+
         if (!token) {
             return res.status(401).json({ message: 'Authentication required' });
         }
 
-        const decoded = jwt.verify(token, process.env.JWT_SECRET);
-        const user = await User.findOne({ _id: decoded.id, status: 'active' });
+        // Call global auth service to validate token
+        const authServiceUrl = process.env.AUTH_SERVICE_URL || 'http://localhost:5000';
+        const response = await axios.get(`${authServiceUrl}/api/auth/validate`, {
+            headers: {
+                'Authorization': `Bearer ${token}`
+            }
+        });
 
-        if (!user) {
-            throw new Error('User not found or inactive');
+        if (response.data && response.data.user) {
+            req.user = response.data.user;
+            req.token = token;
+            next();
+        } else {
+            return res.status(401).json({ message: 'Invalid token' });
         }
-
-        req.user = user;
-        req.token = token;
-        next();
     } catch (error) {
-        res.status(401).json({ message: 'Please authenticate' });
+        console.error('Auth service error:', error.message);
+        res.status(401).json({ message: 'Authentication failed' });
     }
 };
 

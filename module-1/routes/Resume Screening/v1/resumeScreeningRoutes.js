@@ -24,7 +24,7 @@ import {
     predictCandidateSuccess,
     analyzeCandidatePotential
 } from '../../../controllers/Resume Screening/v1/aiIntegrationController.js';
-import { authenticateUser, authorizeRole } from '../../../middleware/auth.js';
+import { authenticate, authorize, requireRole } from '../../../middleware/auth.js';
 import multer from 'multer';
 
 const router = express.Router();
@@ -62,20 +62,20 @@ const upload = multer({
  */
 router.post(
     '/upload',
-    authenticateUser,
+    authenticate,
     upload.single('resume'),
     uploadResume
 );
 
 router.post(
     '/parse-url',
-    authenticateUser,
+    authenticate,
     parseResumeUrl
 );
 
 router.post(
     '/batch-upload',
-    authenticateUser,
+    authenticate,
     upload.array('resumes', 10),
     batchUploadResumes
 );
@@ -86,27 +86,27 @@ router.post(
  */
 router.post(
     '/:id/analyze',
-    authenticateUser,
+    authenticate,
     analyzeResume
 );
 
 router.get(
     '/:id/analysis',
-    authenticateUser,
+    authenticate,
     getAnalysis
 );
 
 router.patch(
     '/:id/analysis/flags',
-    authenticateUser,
-    authorizeRole(['admin', 'reviewer']),
+    authenticate,
+    requireRole('admin', 'reviewer'),
     updateAnalysisFlags
 );
 
 router.get(
     '/analysis/summary',
-    authenticateUser,
-    authorizeRole(['admin', 'manager']),
+    authenticate,
+    requireRole('admin', 'manager'),
     getAnalysisSummary
 );
 
@@ -116,35 +116,35 @@ router.get(
  */
 router.put(
     '/:resumeId/status',
-    authenticateUser,
-    authorizeRole(['admin', 'reviewer']),
+    authenticate,
+    requireRole('admin', 'reviewer'),
     updateScreeningStatus
 );
 
 router.post(
     '/:resumeId/assign',
-    authenticateUser,
-    authorizeRole(['admin', 'manager']),
+    authenticate,
+    requireRole('admin', 'manager'),
     assignReviewer
 );
 
 router.get(
     '/:resumeId/workflow',
-    authenticateUser,
+    authenticate,
     getWorkflowStatus
 );
 
 router.post(
     '/:resumeId/feedback',
-    authenticateUser,
-    authorizeRole(['admin', 'reviewer']),
+    authenticate,
+    requireRole('admin', 'reviewer'),
     submitFeedback
 );
 
 router.get(
     '/statistics',
-    authenticateUser,
-    authorizeRole(['admin', 'manager']),
+    authenticate,
+    requireRole('admin', 'manager'),
     getScreeningStatistics
 );
 
@@ -154,34 +154,34 @@ router.get(
  */
 router.post(
     '/ai/compare',
-    authenticateUser,
-    authorizeRole(['admin', 'reviewer']),
+    authenticate,
+    requireRole('admin', 'reviewer'),
     compareResumes
 );
 
 router.post(
     '/ai/match',
-    authenticateUser,
+    authenticate,
     matchCandidates
 );
 
 router.post(
     '/ai/profiles',
-    authenticateUser,
+    authenticate,
     generateCandidateProfiles
 );
 
 router.post(
     '/ai/predict-success',
-    authenticateUser,
-    authorizeRole(['admin', 'manager']),
+    authenticate,
+    requireRole('admin', 'manager'),
     predictCandidateSuccess
 );
 
 router.post(
     '/ai/analyze-potential',
-    authenticateUser,
-    authorizeRole(['admin', 'manager']),
+    authenticate,
+    requireRole('admin', 'manager'),
     analyzeCandidatePotential
 );
 

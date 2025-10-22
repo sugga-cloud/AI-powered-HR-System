@@ -5,7 +5,7 @@ import {
     updateSkillMetrics,
     getSkillInsights
 } from '../../../controllers/Job Posting/v1/skillRecommendationController.js';
-import { authenticateUser, authorizeRole } from '../../../middleware/auth.js';
+import { authenticate, authorize, requireRole } from '../../../middleware/auth.js';
 
 const router = express.Router();
 
@@ -16,7 +16,7 @@ const router = express.Router();
  */
 router.post(
     '/recommendations',
-    authenticateUser,
+    authenticate,
     getSkillRecommendations
 );
 
@@ -27,7 +27,7 @@ router.post(
  */
 router.post(
     '/gap-analysis',
-    authenticateUser,
+    authenticate,
     analyzeSkillsGap
 );
 
@@ -38,8 +38,8 @@ router.post(
  */
 router.put(
     '/metrics',
-    authenticateUser,
-    authorizeRole(['admin']),
+    authenticate,
+    requireRole('admin'),
     updateSkillMetrics
 );
 
@@ -50,7 +50,7 @@ router.put(
  */
 router.get(
     '/:skillId/insights',
-    authenticateUser,
+    authenticate,
     getSkillInsights
 );
 
