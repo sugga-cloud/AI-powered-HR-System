@@ -28,7 +28,6 @@ class AI {
     });
 
     const data = await response.json();
-console.log("AI Response Data:", data);
     if (!data.choices || !data.choices[0]?.message?.content) {
       throw new Error("AI did not return a valid response");
     }
