@@ -68,3 +68,73 @@ The JSON structure must be:
     throw new Error("AI JD generation failed");
   }
 }
+
+/**
+ * Generate or refine a structured test JSON based on job role, skills, and difficulty level.
+ * If previousResponse is provided, it’s used to refine or expand the test.
+ */
+export async function generateAITest(prompt, previousResponse = null) {
+  try {
+    const messages = [
+      {
+        role: "system",
+        content: `You are an expert AI Test Generator for HR systems.
+You create structured assessment tests (MCQs, coding, aptitude, or communication).
+Always return ONLY a valid JSON object (no markdown, no quotes, no explanations).
+
+The JSON must strictly follow this structure:
+{
+  "testTitle": "string",
+  "testType": "MCQ" | "Coding" | "Aptitude" | "Communication" | "Custom",
+  "durationMinutes": number,
+  "totalMarks": number,
+  "questions": [
+    {
+      "question_id": "string",
+      "question_text": "string",
+      "options": ["string", "string", "string", "string"],
+      "correct_answer": "string",
+      "marks": number
+    }
+  ],
+  "aiMetadata": {
+    "difficulty": "Easy" | "Medium" | "Hard",
+    "topicCoverage": ["string"],
+    "generationNotes": "string"
+  }
+}`,
+      },
+    ];
+
+    // If previous test exists, include it as refinement context
+    if (previousResponse) {
+      messages.push({
+        role: "assistant",
+        content: `Here is the previously generated test JSON:\n${JSON.stringify(
+          previousResponse
+        )}\nPlease refine or extend it based on new requirements.`,
+      });
+    }
+
+    // Add the user’s new request/prompt
+    messages.push({
+      role: "user",
+      content: prompt,
+    });
+
+    const aiResponse = await ai.ask(messages, "json");
+
+    // Parse to valid JSON safely
+    let testJSON;
+    if (typeof aiResponse === "string") {
+      testJSON = JSON.parse(aiResponse);
+    } else {
+      testJSON = aiResponse;
+    }
+
+    return testJSON;
+  } catch (err) {
+    console.error("Error generating AI Test:", err);
+    throw new Error("AI Test generation failed");
+  }
+}
