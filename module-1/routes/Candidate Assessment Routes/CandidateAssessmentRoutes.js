@@ -1,4 +1,10 @@
 import { Router } from "express";
+import {
+    caInitController,
+    caGetTestController,
+    caSubmitTestController,
+    caShortlistedContoller
+} from "../../controllers/Candidate Assessment Controllers/candidateAssessmentController.js";
 const router = Router();
 
 router.post('/init', caInitController); // test creation, credential creation, notification

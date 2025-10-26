@@ -24,6 +24,11 @@ const candidateScoreSchema = new mongoose.Schema(
         ai_score_adjustment: { type: Number, default: 0 }, // optional AI-based adjustment
       },
     ],
+    passing_score: {
+      type: Number,
+      default: 80,
+      required: true,
+    },
     total_score: {
       type: Number,
       required: true,

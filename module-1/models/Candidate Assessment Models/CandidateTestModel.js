@@ -32,10 +32,6 @@ const candidateTestSchema = new mongoose.Schema(
       type: Number,
       default: 0,
     },
-    obtained_marks: {
-      type: Number,
-      default: 0,
-    },
     test_status: {
       type: String,
       enum: ["pending", "in_progress", "completed", "evaluated"],
