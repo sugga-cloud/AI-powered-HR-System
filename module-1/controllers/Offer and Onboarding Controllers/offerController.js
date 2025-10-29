@@ -1,7 +1,7 @@
-import Offer from "../models/Offer.js";
-import OnboardingTask from "../models/OnboardingTask.js";
-import { generateAIOfferLetter } from "../services/aiOfferService.js";
-import { getSalaryBenchmark } from "../services/salaryBenchmarkService.js";
+import Offer from "../../models/Offer and Onboarding/Offer.js";
+import OnboardingTask from "../../models/Offer and Onboarding/OnboardingTask.js";
+import { generateAIOfferLetter } from "../../services/aiOfferService.js";
+import { getSalaryBenchmark } from "../../services/salaryBenchmarkService.js";
 import axios from "axios";
 
 /**
