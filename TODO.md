@@ -1,2 +1,0 @@
-- [x] Create CandidateTestModel.js with Mongoose schema
-- [x] Create CandidateScoreModel.js with Mongoose schema

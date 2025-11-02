@@ -124,10 +124,17 @@ The JSON must strictly follow this structure:
 
     const aiResponse = await ai.ask(messages, "json");
 
-    // Parse to valid JSON safely
+    // Parse to valid JSON safely, handling potential markdown code blocks
     let testJSON;
     if (typeof aiResponse === "string") {
-      testJSON = JSON.parse(aiResponse);
+      // Remove markdown code blocks if present
+      let cleanedResponse = aiResponse.trim();
+      if (cleanedResponse.startsWith("```json")) {
+        cleanedResponse = cleanedResponse.replace(/^```json\s*/, "").replace(/\s*```$/, "");
+      } else if (cleanedResponse.startsWith("```")) {
+        cleanedResponse = cleanedResponse.replace(/^```\s*/, "").replace(/\s*```$/, "");
+      }
+      testJSON = JSON.parse(cleanedResponse);
     } else {
       testJSON = aiResponse;
     }

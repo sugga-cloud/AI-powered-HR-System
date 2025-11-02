@@ -123,8 +123,8 @@ export async function jdUpdateController(req, res) {
       message: shouldReprocess
         ? "JD refinement queued for AI processing"
         : shouldQueuePost
-        ? "JD approved and queued for platform posting"
-        : "JD updated successfully",
+          ? "JD approved and queued for platform posting"
+          : "JD updated successfully",
       jd: updatedJD,
     });
   } catch (err) {

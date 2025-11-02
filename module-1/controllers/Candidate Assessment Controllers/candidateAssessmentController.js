@@ -1,6 +1,6 @@
 import CandidateTest from "../../models/Candidate Assessment Models/CandidateTestModel.js";
 import CandidateScore from "../../models/Candidate Assessment Models/CandidateScoreModel.js";
-import { aiEvaluateTest } from "../../../Utils/AI/"; // ML/AI service (later)
+// import { aiEvaluateTest } from "../../services/"; // ML/AI service (later)
 import TestQueue from "../../queues/testQueue.js"; // Bull queue for async processing
 import axios from "axios";
 import ShortlistedCandidatesModel from "../../models/Resume Screening Models/ShortlistedCandidatesModel.js";
@@ -14,12 +14,12 @@ export const caInitController = async (req, res) => {
   try {
     const { candidate_id, job_id, role, skills, test_type = "MCQ" } = req.body;
 
-    // 1️⃣ Create a base CandidateTest document (status: initiated)
+    // 1️⃣ Create a base CandidateTest document (status: in_progress)
     const newTest = await CandidateTest.create({
       candidate_id,
       job_id,
       test_type,
-      test_status: "initiated",
+      test_status: "in_progress",
       total_marks: 0,
       obtained_marks: 0,
       questions: [],
@@ -40,6 +40,10 @@ Each question should be clear, professional, and have 4 options with one correct
       candidate_id,
       job_id,
     });
+
+    if (!shortlistedCandidate) {
+      return res.status(404).json({ success: false, message: "Candidate not found in shortlisted list" });
+    }
 
     let [loginId, password] = (() => {
       const lid = `cand_${Math.random().toString(36).substring(2, 8)}`;
@@ -67,7 +71,7 @@ HR Team`,
       success: true,
       message: "AI test generation started successfully",
       test_id: newTest._id,
-      status: "initiated",
+      status: "in_progress",
     });
   } catch (error) {
     console.error("❌ Init Test Error:", error);
@@ -131,7 +135,7 @@ export const caSubmitTestController = async (req, res) => {
     await test.save();
 
     // Call AI evaluation microservice for deeper insights
-    const aiResult = await aiEvaluateTest(test._id);
+    // const aiResult = await aiEvaluateTest(test._id);
 
     // Save candidate score document
     const scoreDoc = await CandidateScore.create({

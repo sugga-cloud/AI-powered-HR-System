@@ -1,9 +1,9 @@
 // models/hrModel.js
-const mongoose = require("mongoose");
+import { Schema, model } from "mongoose";
 
-const hrSchema = new mongoose.Schema(
+const hrSchema = new Schema(
   {
-    userId: { type: mongoose.Schema.Types.ObjectId, ref: "User", required: true },
+    userId: { type: Schema.Types.ObjectId, ref: "User", required: true },
     department: { type: String, required: true },
     position: { type: String, required: true },
     experienceYears: { type: Number, default: 0 }
@@ -11,4 +11,4 @@ const hrSchema = new mongoose.Schema(
   { timestamps: true }
 );
 
-module.exports = mongoose.model("HR", hrSchema);
+export default model("HR", hrSchema);
