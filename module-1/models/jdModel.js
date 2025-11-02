@@ -38,23 +38,4 @@ const jdSchema = new mongoose.Schema(
   { timestamps: true }
 );
 
-//arResponse Structure
-/*
-{
-  "jobTitle": "Web Developer",
-  "company": "Wribix",
-  "location": "Remote",
-  "employmentType": "Full-time",
-  "skills": ["React", "Node.js", "MongoDB"],
-  "experience": "1–3 years",
-  "salaryRange": "₹5–8 LPA",
-  "aiMetadata": {
-    "shortSummary": "Hiring Web Developer skilled in MERN stack.",
-    "highlights": ["Work with React & Node.js", "Remote-friendly environment"],
-    "hashtags": ["#WebDeveloper", "#MERN"]
-  }
-}
-
-*/
-
 export default mongoose.model("JD", jdSchema);

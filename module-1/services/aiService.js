@@ -1,3 +1,5 @@
+import axios from "axios";
+import pdfParse from "pdf-parse";
 import AI from "../AI/genAI-1.0.mjs";
 import dotenv from "dotenv";
 dotenv.config();
@@ -136,5 +138,160 @@ The JSON must strictly follow this structure:
   } catch (err) {
     console.error("Error generating AI Test:", err);
     throw new Error("AI Test generation failed");
+  }
+}
+
+export async function shortListedCandidatesForJD(candidates, job) {
+  // Validate input
+  if (!Array.isArray(candidates) || candidates.length === 0)
+    throw new Error("Candidates list is empty or invalid.");
+  if (!job) throw new Error("Job data is missing.");
+
+  // Loop through all candidates and evaluate with AI
+  const results = [];
+
+  for (const candidate of candidates) {
+    const messages = [
+      {
+        role: "system",
+        content:
+          "You are an expert AI recruiter. Analyze candidates objectively based on their skills, experience, and suitability for the given job description. Respond in JSON format only. without any commas or inverted commas. your response should start with '{' and end with '}'",
+      },
+      {
+        role: "user",
+        content: `Candidate details: ${JSON.stringify(candidate)} \n\nJob description: ${JSON.stringify(
+          job
+        )} \n\nEvaluate the candidate and return JSON in the format:
+        {
+          "score": 0-100,
+          "confidence": 0-1,
+          "recommendation": "Strong fit | Average fit | Weak fit | Not suitable",
+          "reasoning": "short explanation",
+          "status": "shortlisted | rejected"
+        }`,
+      },
+    ];
+
+    // Call your AI model
+    const aiResponse = await ai.ask(messages, "json");
+
+    let evaluation;
+    try {
+      evaluation =
+        typeof aiResponse === "string" ? JSON.parse(aiResponse) : aiResponse;
+    } catch (err) {
+      console.error("Invalid AI JSON response for candidate:", candidate.name);
+      evaluation = {
+        score: 0,
+        confidence: 0,
+        recommendation: "Not suitable",
+        reasoning: "AI response could not be parsed.",
+        status: "rejected",
+      };
+    }
+
+    // Push result in ShortlistedCandidate-compatible format
+    results.push({
+      candidateId: candidate._id,
+      jobId: job._id,
+      shortlistedAt: new Date(),
+      status: evaluation.status || "rejected",
+      loginId: candidate.email || null,
+      password: candidate.password || null,
+      aiEvaluation: {
+        score: evaluation.score || 0,
+        confidence: evaluation.confidence || 0,
+        reasoning: evaluation.reasoning || "No reasoning provided.",
+        recommendation: evaluation.recommendation || "Unknown",
+        evaluatedAt: new Date(),
+      },
+    });
+  }
+
+  return results;
+}
+
+// it extracts candidate details from the resume and store them in candidate model
+export async function getCandidateDetailsFromResume(jdId, resumeUrl) {
+  try {
+    // 1️⃣ Download resume PDF
+    const response = await axios.get(resumeUrl, { responseType: "arraybuffer" });
+    const pdfBuffer = Buffer.from(response.data, "utf-8");
+
+    // 2️⃣ Extract text from resume
+    const pdfData = await pdfParse(pdfBuffer);
+    const resumeText = pdfData.text;
+
+    // 3️⃣ Prepare structured extraction prompt
+    const prompt = `
+You are an expert resume parser. 
+Extract information from the given resume text and return it strictly in JSON format without any comma,inverted comma or quotes, matching the following structure:
+
+{
+  "name": "",
+  "email": "",
+  "phone": "",
+  "resume": "",
+  "skills": [],
+  "summary": "",
+  "experience": [
+    {
+      "company": "",
+      "role": "",
+      "duration": "",
+      "description": ""
+    }
+  ],
+  "education": [
+    {
+      "institution": "",
+      "degree": "",
+      "fieldOfStudy": "",
+      "startDate": "",
+      "endDate": ""
+    }
+  ],
+  "projects": [
+    {
+      "name": "",
+      "description": "",
+      "technologies": [],
+      "link": ""
+    }
+  ],
+  "interests": [],
+  "job_id": ""
+}
+
+Make sure:
+- All keys are always present.
+- Dates are ISO strings if available.
+- Use an empty array or empty string where information is missing.
+
+Resume text:
+${resumeText}
+    `;
+
+    // 4️⃣ Ask AI for structured output
+    const aiResponse = await ai.ask([{ role: "user", content: prompt }], "json");
+
+    // 5️⃣ Parse JSON safely
+    let candidateData;
+    try {
+      candidateData = typeof aiResponse === "string" ? JSON.parse(aiResponse) : aiResponse;
+    } catch (error) {
+      console.error("❌ Failed to parse AI JSON:", aiResponse);
+      throw new Error("AI returned invalid JSON format");
+    }
+
+    // 6️⃣ Add job_id and resume URL
+    candidateData.job_id = jdId;
+    candidateData.resume = resumeUrl;
+
+    // 7️⃣ Return structured data ready for mongoose save
+    return candidateData;
+  } catch (error) {
+    console.error("Error in getCandidateDetailsFromResume:", error.message);
+    throw error;
   }
 }

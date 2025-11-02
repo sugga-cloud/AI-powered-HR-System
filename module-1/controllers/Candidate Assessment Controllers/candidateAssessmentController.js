@@ -1,6 +1,6 @@
 import CandidateTest from "../../models/Candidate Assessment Models/CandidateTestModel.js";
 import CandidateScore from "../../models/Candidate Assessment Models/CandidateScoreModel.js";
-import { aiEvaluateTest } from "../../../Utils/AI/"; // ML/AI service (later)
+import { aiEvaluateTest } from "../../AI/genAI-1.0.mjs"; // ML/AI service (later)
 import TestQueue from "../../queues/testQueue.js"; // Bull queue for async processing
 import axios from "axios";
 import ShortlistedCandidatesModel from "../../models/Resume Screening Models/ShortlistedCandidatesModel.js";
