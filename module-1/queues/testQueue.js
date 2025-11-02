@@ -1,6 +1,6 @@
 import Queue from "bull";
 import CandidateTest from "../models/Candidate Assessment Models/CandidateTestModel.js";
-import { generateAITest } from "../services/testAIService.js"; // your AI test generation function
+import { generateAITest } from "../services/aiService.js"; // your AI test generation function
 import dotenv from "dotenv";
 dotenv.config();
 

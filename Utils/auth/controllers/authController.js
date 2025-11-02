@@ -1,9 +1,9 @@
 // controllers/authController.js
-const User = require("../models/userModel");
-const generateToken = require("../utils/generateToken");
+import User from "../models/userModel.js";
+import generateToken from "../utils/generateToken.js";
 
 // Register a new user
-exports.registerUser = async (req, res) => {
+export async function registerUser(req, res) {
   try {
     const { name, email, password, role } = req.body;
 
@@ -21,10 +21,10 @@ exports.registerUser = async (req, res) => {
   } catch (error) {
     res.status(500).json({ message: "Server Error", error: error.message });
   }
-};
+}
 
 // Login user
-exports.loginUser = async (req, res) => {
+export async function loginUser(req, res) {
   try {
     const { email, password } = req.body;
 
@@ -44,10 +44,10 @@ exports.loginUser = async (req, res) => {
   } catch (error) {
     res.status(500).json({ message: "Server Error", error: error.message });
   }
-};
+}
 
 // Validate token and get user info
-exports.validateToken = async (req, res) => {
+export async function validateToken(req, res) {
   try {
     const user = req.user; // from middleware
     if (!user) return res.status(401).json({ message: "Not Authorized" });
@@ -56,4 +56,4 @@ exports.validateToken = async (req, res) => {
   } catch (error) {
     res.status(500).json({ message: "Server Error", error: error.message });
   }
-};
+}

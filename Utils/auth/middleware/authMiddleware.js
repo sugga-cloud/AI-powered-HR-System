@@ -1,6 +1,6 @@
 // middleware/authMiddleware.js
-const jwt = require("jsonwebtoken");
-const User = require("../models/userModel");
+import jwt from "jsonwebtoken";
+import User from "../models/userModel.js";
 
 const protect = async (req, res, next) => {
   let token;
@@ -21,4 +21,4 @@ const protect = async (req, res, next) => {
   if (!token) return res.status(401).json({ message: "No Token Provided" });
 };
 
-module.exports = protect;
+export default protect;
