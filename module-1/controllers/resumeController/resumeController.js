@@ -1,5 +1,6 @@
 import resumeShortListQueue from '../../queues/resumeShortListQueue.js';
-
+import CandidateModel from '../../models/candidateModel.js';
+import ShortlistedCandidatesModel from '../../models/Resume Screening Models/ShortlistedCandidatesModel.js';
 export const shortListController = async (req, res) => {
   try {
     const { jdId } = req.body;
@@ -13,6 +14,32 @@ export const shortListController = async (req, res) => {
     return res.status(200).json({ message: "Resume shortlisting in progress" });
   } catch (error) {
     console.error("Error in shortListController:", error);
+    return res.status(500).json({ message: "Internal server error" });
+  }
+};
+
+export const getAllCandidateController = async (req, res) => {
+  try {
+    // Logic to fetch all candidates from the database
+    const { jdId } = req.body;
+
+    const candidates = await CandidateModel.find({job_id:jdId}); // Assuming CandidateModel is defined and imported  
+    return res.status(200).json({ candidates });
+  } catch (error) {
+    console.error("Error in getAllCandidateController:", error);
+    return res.status(500).json({ message: "Internal server error" });
+  }
+};
+
+export const getAllShortlistedController = async (req, res) => {
+  try {
+    // Logic to fetch all candidates from the database
+    const { jdId } = req.body;
+
+    const candidates = await ShortlistedCandidatesModel.find({jobId:jdId}).populate("candidateId"); // Assuming CandidateModel is defined and imported  
+    return res.status(200).json({ candidates });
+  } catch (error) {
+    console.error("Error in getAllCandidateController:", error);
     return res.status(500).json({ message: "Internal server error" });
   }
 };
