@@ -50,5 +50,4 @@ const schema = new mongoose.Schema({
     type: String,
   },
 });
-
-export default mongoose.model('ShortlistedCandidate', schema);
+export default mongoose.models.shortlistedcandidate || mongoose.model('shortlistedcandidate', schema);

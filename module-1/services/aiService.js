@@ -1,5 +1,5 @@
 import axios from "axios";
-import pdfParse from "pdf-parse";
+import * as pdfjsLib from "pdfjs-dist/legacy/build/pdf.mjs";
 import AI from "../AI/genAI-1.0.mjs";
 import dotenv from "dotenv";
 dotenv.config();
@@ -10,7 +10,6 @@ const ai = new AI({
 
 /**
  * Generate or refine a structured JD JSON from user prompt.
- * If previousResponse is provided, it is used as context for refinement.
  */
 export async function generateAIJD(prompt, previousResponse = null) {
   try {
@@ -40,7 +39,6 @@ The JSON structure must be:
       },
     ];
 
-    // Include previous AI response as context if available
     if (previousResponse) {
       messages.push({
         role: "assistant",
@@ -48,21 +46,10 @@ The JSON structure must be:
       });
     }
 
-    // Add the user's new instruction
-    messages.push({
-      role: "user",
-      content: prompt,
-    });
+    messages.push({ role: "user", content: prompt });
 
     const aiResponse = await ai.ask(messages, "json");
-
-    // Ensure it's valid JSON
-    let jdJSON;
-    if (typeof aiResponse === "string") {
-      jdJSON = JSON.parse(aiResponse);
-    } else {
-      jdJSON = aiResponse;
-    }
+    const jdJSON = typeof aiResponse === "string" ? JSON.parse(aiResponse) : aiResponse;
 
     return jdJSON;
   } catch (err) {
@@ -72,8 +59,7 @@ The JSON structure must be:
 }
 
 /**
- * Generate or refine a structured test JSON based on job role, skills, and difficulty level.
- * If previousResponse is provided, it’s used to refine or expand the test.
+ * Generate or refine a structured test JSON.
  */
 export async function generateAITest(prompt, previousResponse = null) {
   try {
@@ -108,37 +94,23 @@ The JSON must strictly follow this structure:
       },
     ];
 
-    // If previous test exists, include it as refinement context
     if (previousResponse) {
       messages.push({
         role: "assistant",
-        content: `Here is the previously generated test JSON:\n${JSON.stringify(
-          previousResponse
-        )}\nPlease refine or extend it based on new requirements.`,
+        content: `Here is the previously generated test JSON:\n${JSON.stringify(previousResponse)}\nPlease refine or extend it based on new requirements.`,
       });
     }
 
-    // Add the user’s new request/prompt
-    messages.push({
-      role: "user",
-      content: prompt,
-    });
+    messages.push({ role: "user", content: prompt });
 
     const aiResponse = await ai.ask(messages, "json");
+    let testJSON = typeof aiResponse === "string" ? aiResponse.trim() : aiResponse;
 
-    // Parse to valid JSON safely, handling potential markdown code blocks
-    let testJSON;
-    if (typeof aiResponse === "string") {
-      // Remove markdown code blocks if present
-      let cleanedResponse = aiResponse.trim();
-      if (cleanedResponse.startsWith("```json")) {
-        cleanedResponse = cleanedResponse.replace(/^```json\s*/, "").replace(/\s*```$/, "");
-      } else if (cleanedResponse.startsWith("```")) {
-        cleanedResponse = cleanedResponse.replace(/^```\s*/, "").replace(/\s*```$/, "");
+    if (typeof testJSON === "string") {
+      if (testJSON.startsWith("```")) {
+        testJSON = testJSON.replace(/```(json)?/g, "").trim();
       }
-      testJSON = JSON.parse(cleanedResponse);
-    } else {
-      testJSON = aiResponse;
+      testJSON = JSON.parse(testJSON);
     }
 
     return testJSON;
@@ -148,91 +120,198 @@ The JSON must strictly follow this structure:
   }
 }
 
+/**
+ * Evaluate and shortlist candidates for a given JD using AI
+ */
+
+function withTimeout(promise, ms, msg = "Operation timed out") {
+  return Promise.race([
+    promise,
+    new Promise((_, reject) => setTimeout(() => reject(new Error(msg)), ms))
+  ]);
+}
+
 export async function shortListedCandidatesForJD(candidates, job) {
-  // Validate input
   if (!Array.isArray(candidates) || candidates.length === 0)
     throw new Error("Candidates list is empty or invalid.");
   if (!job) throw new Error("Job data is missing.");
 
-  // Loop through all candidates and evaluate with AI
+  console.log("🚀 Starting AI evaluation for candidates...");
   const results = [];
 
   for (const candidate of candidates) {
-    const messages = [
-      {
-        role: "system",
-        content:
-          "You are an expert AI recruiter. Analyze candidates objectively based on their skills, experience, and suitability for the given job description. Respond in JSON format only. without any commas or inverted commas. your response should start with '{' and end with '}'",
-      },
-      {
-        role: "user",
-        content: `Candidate details: ${JSON.stringify(candidate)} \n\nJob description: ${JSON.stringify(
-          job
-        )} \n\nEvaluate the candidate and return JSON in the format:
-        {
-          "score": 0-100,
-          "confidence": 0-1,
-          "recommendation": "Strong fit | Average fit | Weak fit | Not suitable",
-          "reasoning": "short explanation",
-          "status": "shortlisted | rejected"
-        }`,
-      },
-    ];
-
-    // Call your AI model
-    const aiResponse = await ai.ask(messages, "json");
-
-    let evaluation;
     try {
-      evaluation =
-        typeof aiResponse === "string" ? JSON.parse(aiResponse) : aiResponse;
-    } catch (err) {
-      console.error("Invalid AI JSON response for candidate:", candidate.name);
-      evaluation = {
-        score: 0,
-        confidence: 0,
-        recommendation: "Not suitable",
-        reasoning: "AI response could not be parsed.",
-        status: "rejected",
-      };
-    }
+      const messages = [
+        {
+          role: "system",
+          content: `
+You are an expert AI recruiter.
+Analyze candidates objectively based on their skills, experience, and suitability for the given job description.
+Return output **strictly as VALID JSON ONLY** (no markdown, no explanations, no code fences, no extra text).
+The JSON must exactly match this format:
+{
+  "score": 0-100,
+  "confidence": 0-1,
+  "recommendation": "Strong fit | Average fit | Weak fit | Not suitable",
+  "reasoning": "short explanation",
+  "status": "shortlisted | rejected"
+}`,
+        },
+        {
+          role: "user",
+          content: `Candidate details: ${JSON.stringify(candidate)}
+Job description: ${JSON.stringify(job)}
+Now respond strictly in JSON.`,
+        },
+      ];
 
-    // Push result in ShortlistedCandidate-compatible format
-    results.push({
-      candidateId: candidate._id,
-      jobId: job._id,
-      shortlistedAt: new Date(),
-      status: evaluation.status || "rejected",
-      loginId: candidate.email || null,
-      password: candidate.password || null,
-      aiEvaluation: {
-        score: evaluation.score || 0,
-        confidence: evaluation.confidence || 0,
-        reasoning: evaluation.reasoning || "No reasoning provided.",
-        recommendation: evaluation.recommendation || "Unknown",
-        evaluatedAt: new Date(),
-      },
-    });
+      // 🧠 Ask AI (with timeout)
+      const aiResponse = await withTimeout(
+        ai.ask(messages, "json"),
+        30000,
+        "AI evaluation timeout"
+      );
+
+      // 🧹 Sanitize response
+      let cleanResponse = typeof aiResponse === "string"
+        ? aiResponse
+        : JSON.stringify(aiResponse);
+
+      cleanResponse = cleanResponse
+        .replace(/```json/gi, "")
+        .replace(/```/g, "")
+        .trim();
+
+      // Ensure the response starts and ends with braces
+      const jsonStart = cleanResponse.indexOf("{");
+      const jsonEnd = cleanResponse.lastIndexOf("}");
+      if (jsonStart === -1 || jsonEnd === -1) {
+        console.warn("⚠️ AI did not return valid JSON format for:", candidate.name);
+        throw new Error("AI response missing valid JSON structure.");
+      }
+
+      const jsonString = cleanResponse.slice(jsonStart, jsonEnd + 1);
+
+      // ✅ Parse safely
+      let evaluation;
+      try {
+        evaluation = JSON.parse(jsonString);
+      } catch (err) {
+        console.error("❌ JSON parse error for candidate:", candidate.name, err.message);
+        evaluation = {
+          score: 0,
+          confidence: 0,
+          recommendation: "Not suitable",
+          reasoning: "AI response could not be parsed.",
+          status: "rejected",
+        };
+      }
+
+      console.log(`✅ AI evaluation for ${candidate.name}: ${evaluation.status}`);
+
+      // Build result entry
+      results.push({
+        candidateId: candidate._id,
+        jobId: job._id,
+        shortlistedAt: new Date(),
+        status: evaluation.status || "rejected",
+        loginId: candidate.email || null,
+        password: candidate.password || null,
+        aiEvaluation: {
+          score: evaluation.score || 0,
+          confidence: evaluation.confidence || 0,
+          reasoning: evaluation.reasoning || "No reasoning provided.",
+          recommendation: evaluation.recommendation || "Unknown",
+          evaluatedAt: new Date(),
+        },
+      });
+    } catch (err) {
+      console.error(`❌ Error evaluating candidate ${candidate.name}:`, err.message);
+      results.push({
+        candidateId: candidate._id,
+        jobId: job._id,
+        shortlistedAt: new Date(),
+        status: "rejected",
+        loginId: candidate.email || null,
+        password: candidate.password || null,
+        aiEvaluation: {
+          score: 0,
+          confidence: 0,
+          reasoning: "AI evaluation failed: " + err.message,
+          recommendation: "Unknown",
+          evaluatedAt: new Date(),
+        },
+      });
+    }
   }
 
+  console.log("🏁 Candidate evaluation completed.");
   return results;
 }
 
-// it extracts candidate details from the resume and store them in candidate model
+/**
+ * Extracts candidate details from resume using AI
+ */
+import pdfParse from "pdf-parse-fixed";
+
 export async function getCandidateDetailsFromResume(jdId, resumeUrl) {
   try {
-    // 1️⃣ Download resume PDF
+    console.log("🔍 Starting resume parsing for:", resumeUrl);
+
+    // 1️⃣ Download resume
     const response = await axios.get(resumeUrl, { responseType: "arraybuffer" });
-    const pdfBuffer = Buffer.from(response.data, "utf-8");
+    const pdfBuffer = Buffer.from(response.data);
 
-    // 2️⃣ Extract text from resume
-    const pdfData = await pdfParse(pdfBuffer);
-    const resumeText = pdfData.text;
+    // 2️⃣ Parse PDF text
+    const data = await pdfParse(pdfBuffer);
+    const resumeText = data.text?.trim() || "";
+    if (!resumeText) throw new Error("Empty or invalid PDF content: " + resumeUrl);
 
-    // 3️⃣ Prepare structured extraction prompt
+    // 3️⃣ Strict JSON-only prompt for AI
     const prompt = `
-You are an expert resume parser. 
-Extract information from the given resume text and return it strictly in JSON format without any comma,inverted comma or quotes, matching the following structure:
+You are a professional resume parser AI.
+
+Extract all relevant information from the given resume text.
+Also handle the data types according to following schema:
+{
+        name: { type: String, required: true },
+        email: { type: String, required: true, unique: true },
+        phone: { type: String },
+        skills: { type: [String] },
+        summary: { type: String },
+        experience: [
+            {
+                company: { type: String },
+                role: { type: String },
+                duration: { type: String },
+                description: { type: String },
+            },
+        ],
+            education: [
+            {
+                institution: { type: String },
+                degree: { type: String },
+                fieldOfStudy: { type: String },
+                startDate: { type: Date },
+                endDate: { type: Date },
+            },
+        ],
+        projects: [
+            {
+                name: { type: String },
+                description: { type: String },
+                technologies: { type: [String] },
+                link: { type: String },
+            },
+        ],
+        interests: { type: [String] },
+        
+    }
+.
+Return output STRICTLY in **valid JSON format**.
+Do NOT include explanations, markdown formatting, backticks, or any text outside the JSON also for key and values use appropriate quotes so that json would be perfect.
+
+Here is the exact JSON structure to follow:
 
 {
   "name": "",
@@ -258,47 +337,48 @@ Extract information from the given resume text and return it strictly in JSON fo
       "endDate": ""
     }
   ],
-  "projects": [
-    {
-      "name": "",
-      "description": "",
-      "technologies": [],
-      "link": ""
-    }
-  ],
+  "projects": [],
   "interests": [],
   "job_id": ""
 }
 
-Make sure:
-- All keys are always present.
-- Dates are ISO strings if available.
-- Use an empty array or empty string where information is missing.
-
 Resume text:
 ${resumeText}
-    `;
+`;
 
-    // 4️⃣ Ask AI for structured output
+    // 4️⃣ Get AI response
     const aiResponse = await ai.ask([{ role: "user", content: prompt }], "json");
 
-    // 5️⃣ Parse JSON safely
+    // 5️⃣ Sanitize AI response
+    let cleanResponse = aiResponse;
+    if (typeof aiResponse !== "string") cleanResponse = JSON.stringify(aiResponse);
+
+    // Remove potential code fences or extra text
+    cleanResponse = cleanResponse
+      .replace(/```json/gi, "")
+      .replace(/```/g, "")
+      .replace(/^[^{]*({[\s\S]*})[^}]*$/, "$1") // extract JSON body
+      .trim();
+
+    // 6️⃣ Validate JSON parsing
     let candidateData;
     try {
-      candidateData = typeof aiResponse === "string" ? JSON.parse(aiResponse) : aiResponse;
-    } catch (error) {
-      console.error("❌ Failed to parse AI JSON:", aiResponse);
-      throw new Error("AI returned invalid JSON format");
+      candidateData = JSON.parse(cleanResponse);
+    } catch (parseErr) {
+      console.error("❌ JSON parse error:", parseErr.message);
+      console.log("🔍 Raw AI output:", cleanResponse);
+      throw new Error("AI returned invalid JSON. Please check the output.");
     }
 
-    // 6️⃣ Add job_id and resume URL
+    // 7️⃣ Add metadata
     candidateData.job_id = jdId;
     candidateData.resume = resumeUrl;
 
-    // 7️⃣ Return structured data ready for mongoose save
+    console.log("✅ Resume parsed successfully for JD:", jdId);
     return candidateData;
+
   } catch (error) {
-    console.error("Error in getCandidateDetailsFromResume:", error.message);
+    console.error("❌ Error in getCandidateDetailsFromResume:", error.message);
     throw error;
   }
 }
