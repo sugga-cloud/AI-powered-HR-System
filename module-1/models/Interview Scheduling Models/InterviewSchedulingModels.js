@@ -25,7 +25,7 @@ const interviewScheduleSchema = new mongoose.Schema(
         },
         scheduled_time: {
             type: Date,
-            required: true,
+            required: false,
         },
         duration_minutes: {
             type: Number,

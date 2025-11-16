@@ -9,7 +9,7 @@ const router = Router();
 
 router.use('/jd', authenticate, jdRouter);
 router.use('/ca', authenticate, caRouter);
-router.use('/is', authenticate, isRouter);
+router.use('/is', isRouter);
 router.use('/oo', authenticate, ooRouter);
 router.use('/rs', rsRouter);
 export default router;
