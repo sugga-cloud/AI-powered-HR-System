@@ -6,7 +6,9 @@ import ooRouter from "./Offer and Onboarding Routes/offerRoutes.js";
 import { authenticate } from "../middleware/authMiddleware.js";
 import rsRouter from "./Resume  Shortlisting Routes/resumeRoutes.js";
 const router = Router();
-
+router.get('/healthz', (req, res) => {
+    res.json({ status: 'API is healthy' });
+});
 router.use('/jd', authenticate, jdRouter);
 router.use('/ca', authenticate, caRouter);
 router.use('/is', isRouter);
