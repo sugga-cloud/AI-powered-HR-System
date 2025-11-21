@@ -23,7 +23,7 @@ export async function connectToDatabase(options = {}) {
 	if (isConnected || mongoose.connection.readyState === 1) {
 		return mongoose;
 	}
-
+	console.log(MONGODB_URI);
 	const connectOptions = Object.assign({}, DEFAULT_OPTIONS, options);
 
 	await mongoose.connect(MONGODB_URI, connectOptions);
