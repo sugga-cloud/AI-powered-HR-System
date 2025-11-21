@@ -24,12 +24,17 @@ export async function connectToDatabase(options = {}) {
 		return mongoose;
 	}
 	console.log(MONGODB_URI);
+	try{
 	const connectOptions = Object.assign({}, DEFAULT_OPTIONS, options);
 
 	await mongoose.connect(MONGODB_URI, connectOptions);
 	isConnected = true;
 	console.log("Database connected successfully");
 	return mongoose;
+	}catch(err){
+		console.log("Database Error "+err);
+		return err;
+	}
 }
 
 export async function disconnect() {
