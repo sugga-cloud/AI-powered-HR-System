@@ -16,7 +16,6 @@ await connectToDatabase();
 // Routes
 app.use('/api', apiRouter);
 
-
 // Basic error handling
 app.use((err, req, res, next) => {
     console.error(err.stack);
