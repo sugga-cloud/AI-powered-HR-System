@@ -14,6 +14,9 @@ app.use(express.urlencoded({ extended: true }));
 await connectToDatabase();
 
 // Routes
+app.get('/healthz', (req, res) => {
+    res.send('HR System API is running!');
+});
 app.use('/api', apiRouter);
 
 // Basic error handling

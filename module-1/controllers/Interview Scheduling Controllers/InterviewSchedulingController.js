@@ -1,6 +1,6 @@
 import InterviewSchedule from "../../models/Interview Scheduling Models/InterviewSchedulingModels.js";
 import ShortlistedCandidatesModel from "../../models/Resume Screening Models/ShortlistedCandidatesModel.js";
-import { suggestBestSlot } from "../../services/aiSchedulingService.js";
+import userModel from "../../models/Util Models/userModel.js";
 import { generateMeetingLink } from "../../services/calendarService.js";
 import axios from "axios";
 
@@ -10,28 +10,28 @@ export const createInterviewController = async (req, res) => {
             candidate_id,
             job_id,
             interviewer_ids,
-            round,
-            candidateAvailability,
-            interviewerAvailability,
+            // round,
+            // candidateAvailability,
+            // interviewerAvailability,
             mode,
         } = req.body;
 
         // Fetch candidates shortlisted by AI analysis
         const shortlistedCandidate = await ShortlistedCandidatesModel.findOne({
-            candidate_id,
-            job_id,
+            candidateId: candidate_id,
+            jobId: job_id,
         });
 
         // AI finds best slot
-        const bestSlot = await suggestBestSlot(candidateAvailability, interviewerAvailability);
+        // const bestSlot = await suggestBestSlot(candidateAvailability, interviewerAvailability);
         const meeting_link = await generateMeetingLink({ mode });
 
         const interview = await InterviewSchedule.create({
             candidate_id,
             job_id,
             interviewer_ids,
-            round,
-            scheduled_time: bestSlot,
+            // round,
+            // scheduled_time: bestSlot,
             mode,
             meeting_link,
         });
@@ -40,9 +40,7 @@ export const createInterviewController = async (req, res) => {
         await axios.post(`${process.env.NOTIFICATION_SERVICE_URL}/api/notification/send`, {
             to: `${shortlistedCandidate.email}@gmail.com`,
             subject: "Interview Scheduled",
-            html: `<p>Your ${round} interview has been scheduled for ${new Date(
-                bestSlot
-            ).toLocaleString()}.<br>Meeting Link: <a href="${meeting_link}">${meeting_link}</a></p>`,
+            html: `<p>Your interview has been scheduled.<br>Meeting Link: <a href="${meeting_link}">${meeting_link}</a></p>`,
         });
 
         res.status(201).json({
