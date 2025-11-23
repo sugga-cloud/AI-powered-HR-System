@@ -26,8 +26,9 @@ class AI {
         answer_format, // optional, your AI backend can handle
       }),
     });
-
+console.log('Response Status:', response);
     const data = await response.json();
+
     if (!data.choices || !data.choices[0]?.message?.content) {
       throw new Error("AI did not return a valid response");
     }
