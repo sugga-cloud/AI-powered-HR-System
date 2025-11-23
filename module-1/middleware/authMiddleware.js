@@ -70,8 +70,8 @@ export const checkJobOwnership = async (req, res, next) => {
             return res.status(404).json({ message: 'Job not found' });
         }
 
-        // Allow if user is admin or has manage_users permission
-        if (req.user.role === 'admin' || req.user.hasPermission('manage_users')) {
+        // Allow if user is HR or has manage_users permission
+        if (req.user.role === 'hr' || req.user.hasPermission('manage_users')) {
             return next();
         }
 
