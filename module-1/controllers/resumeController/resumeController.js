@@ -35,7 +35,7 @@ export const getAllShortlistedController = async (req, res) => {
   try {
     // Logic to fetch all candidates from the database
     const { jdId } = req.body;
-
+    console.log(jdId);
     const candidates = await ShortlistedCandidatesModel.find({jobId:jdId}).populate("candidateId"); // Assuming CandidateModel is defined and imported  
     return res.status(200).json({ candidates });
   } catch (error) {
