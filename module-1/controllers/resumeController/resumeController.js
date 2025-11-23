@@ -36,13 +36,26 @@ export const getAllCandidateController = async (req, res) => {
 
 export const getAllShortlistedController = async (req, res) => {
   try {
-    // Logic to fetch all candidates from the database
     const { jdId } = req.params;
-    console.log(jdId);
-    const candidates = await ShortlistedCandidatesModel.find({jobId:jdId}).populate("candidateId"); // Assuming CandidateModel is defined and imported  
+    console.log("jdId:", jdId);
+
+    let candidates;
+
+    if (!jdId || jdId === "all") {
+      // Return ALL shortlisted candidates
+      candidates = await ShortlistedCandidatesModel
+        .find()
+        .populate("candidateId");
+    } else {
+      // Return shortlisted candidates for a specific job
+      candidates = await ShortlistedCandidatesModel
+        .find({ jobId: jdId })
+        .populate("candidateId");
+    }
+
     return res.status(200).json({ candidates });
   } catch (error) {
-    console.error("Error in getAllCandidateController:", error);
+    console.error("Error in getAllShortlistedController:", error);
     return res.status(500).json({ message: "Internal server error" });
   }
 };
