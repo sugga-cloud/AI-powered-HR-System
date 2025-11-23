@@ -19,7 +19,7 @@ export async function generateAIJD(prompt, previousResponse = null) {
         content: `You are an expert HR assistant.
 You generate or refine Job Descriptions in strict JSON format.
 Always return ONLY a valid JSON object.
-Never include quotes (\`,\`\`\`), extra space, explanations or plain text.
+Never include quotes (\`,\`\`\`,',"), extra space, explanations or plain text.
 The JSON structure must be:
 
 {
