@@ -147,7 +147,7 @@ export async function shortListedCandidatesForJD(candidates, job) {
           content: `
 You are an expert AI recruiter.
 Analyze candidates objectively based on their skills, experience, and suitability for the given job description.
-Return output **strictly as VALID JSON ONLY** (no markdown, no explanations, no code fences, no extra text).
+Return output **strictly as VALID JSON ONLY** (no markdown, no explanations, no code fences, no extra text, no quotes like ',\`\`\`," at starting or ending of the response).
 The JSON must exactly match this format:
 {
   "score": 0-100,
