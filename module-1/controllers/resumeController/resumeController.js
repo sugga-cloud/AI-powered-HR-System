@@ -22,8 +22,11 @@ export const getAllCandidateController = async (req, res) => {
   try {
     // Logic to fetch all candidates from the database
     const { jdId } = req.params;
-console.log(jdId);
-    const candidates = await CandidateModel.find({job_id:jdId}); // Assuming CandidateModel is defined and imported  
+    let candidates;
+    if(!jdId || jdId==='all')
+       candidates = await CandidateModel.find(); // Assuming CandidateModel is defined and imported  
+    else candidates = await CandidateModel.find({job_id:jdId}); // Assuming CandidateModel is defined and imported  
+    console.log(jdId);
     return res.status(200).json({ candidates });
   } catch (error) {
     console.error("Error in getAllCandidateController:", error);
