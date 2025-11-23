@@ -6,7 +6,6 @@ import axios from "axios";
 
 export const createInterviewController = async (req, res) => {
     try {
-
         const {
             candidate_id,
             job_id,
