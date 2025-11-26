@@ -37,7 +37,7 @@ export const createOfferController = async (req, res) => {
         });
 
         // 4️⃣ Send email notification
-        await axios.post(`${process.env.NOTIFICATION_SERVICE_URL}/api/notification/send`, {
+        await axios.post(`${process.env.NOTIFICATION_SERVICE_URL}/api/notifications/send`, {
             to: candidate_email,
             subject: "🎉 Your Job Offer from AI HR System",
             html: `
@@ -130,7 +130,7 @@ export const resendOfferEmailController = async (req, res) => {
         if (!offer)
             return res.status(404).json({ success: false, message: "Offer not found" });
 
-        await axios.post(`${process.env.NOTIFICATION_SERVICE_URL}/api/notification/send`, {
+        await axios.post(`${process.env.NOTIFICATION_SERVICE_URL}/api/notifications/send`, {
             to: offer.candidate_id.email,
             subject: "📩 Reminder: Your Job Offer Awaits!",
             html: `

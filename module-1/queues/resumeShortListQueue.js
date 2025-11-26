@@ -12,7 +12,7 @@ const resumeShortlistQueue = new Queue('resumeShortlistQueue', {
   redis,
 });
 
-resumeShortlistQueue.process('resumeShortlistQueue',async (job) => {
+resumeShortlistQueue.process('resumeShortlistQueue', async (job) => {
   const { jdId } = job.data;
   const result = await shortListedCandidatesForJD(jdId);
   console.log(`Resume shortlisting completed for JD ID: ${jdId} status: ${result.message}`);
