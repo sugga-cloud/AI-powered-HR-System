@@ -37,12 +37,23 @@ Each question should be clear, professional, and have 4 options with one correct
       userId: candidate_id,
     });
     const shortlistedCandidate = await ShortlistedCandidatesModel.findOne({
-      candidate_id,
-      job_id,
-    });
+      candidateId: candidate_id,
+      jobId: job_id,
+    }).populate('candidateId');
 
     if (!shortlistedCandidate) {
+      console.warn("⚠️ Shortlisted candidate not found for:", { candidate_id, job_id });
       return res.status(404).json({ success: false, message: "Candidate not found in shortlisted list" });
+    }
+
+    // Get email and name from populated candidateId
+    const candidateEmail = shortlistedCandidate.candidateId?.email || shortlistedCandidate.email;
+    const candidateName = shortlistedCandidate.candidateId?.name || shortlistedCandidate.name;
+
+    // Verify email exists
+    if (!candidateEmail) {
+      console.warn("⚠️ Candidate email not found for candidate:", candidate_id);
+      return res.status(400).json({ success: false, message: "Candidate email not found" });
     }
 
     let [loginId, password] = (() => {
@@ -56,15 +67,23 @@ Each question should be clear, professional, and have 4 options with one correct
     await shortlistedCandidate.save();
 
     // 4️⃣ Notify candidate (optional)
-    await axios.post("${process.env.NOTIFICATION_SERVICE_URL}/api/notification/send", {
-      to: shortlistedCandidate.email,
-      subject: "Your Candidate Assessment Test is Being Prepared",
-      html: `Dear ${shortlistedCandidate.name},<br/><br/>
+    try {
+      const notificationPayload = {
+        to: candidateEmail,
+        subject: "Your Candidate Assessment Test is Being Prepared",
+        html: `Dear ${candidateName},<br/><br/>
 Your assessment test for the applied role is being prepared. You will receive another email once it's ready.<br/><br/>
-Login Credentials:<br/> <strong>Login ID:</strong> ${shortlistedCandidate.loginId}<br/> <strong>Password:</strong> ${shortlistedCandidate.password}<br/><br/>
+Login Credentials:<br/> <strong>Login ID:</strong> ${loginId}<br/> <strong>Password:</strong> ${password}<br/><br/>
 Best regards,<br/>
 HR Team`,
-    })
+      };
+
+      console.log("📧 Sending notification to:", candidateEmail);
+      await axios.post(`${process.env.NOTIFICATION_SERVICE_URL}/api/notifications/send`, notificationPayload);
+      console.log("✅ Notification queued successfully for:", candidateEmail);
+    } catch (emailError) {
+      console.warn("⚠️ Email notification failed, but test will proceed:", emailError.message);
+    }
 
     // 5️⃣ Send response back immediately
     res.status(201).json({
@@ -85,12 +104,9 @@ HR Team`,
  */
 export const caGetTestController = async (req, res) => {
   try {
-    const { candidate_id } = req.query;
+    const { test_id } = req.params;
 
-    const test = await CandidateTest.findOne({
-      candidate_id,
-      test_status: { $in: ["pending", "in_progress"] },
-    });
+    const test = await CandidateTest.findById(test_id);
 
     if (!test)
       return res
@@ -136,6 +152,7 @@ export const caSubmitTestController = async (req, res) => {
 
     // Call AI evaluation microservice for deeper insights
     // const aiResult = await aiEvaluateTest(test._id);
+    const aiResult = {}; // Initialize as empty object
 
     // Save candidate score document
     const scoreDoc = await CandidateScore.create({
@@ -163,9 +180,22 @@ export const caSubmitTestController = async (req, res) => {
  * @route GET /api/candidate-assessment/shortlisted
  */
 export const caShortlistedController = async (req, res) => {
-
   try {
-    const html = `
+    const shortlisted = await CandidateScore.find({
+      "ai_analysis.final_recommendation": { $in: ["yes", "strong_yes"] },
+    }).populate("candidate_id job_id");
+
+    // Send email to each shortlisted candidate
+    for (const candidate of shortlisted) {
+      try {
+        const candidateName = candidate.candidate_id?.name || "Candidate";
+        const candidateEmail = candidate.candidate_id?.email;
+
+        if (!candidateEmail) {
+          console.warn("⚠️ Email not found for candidate:", candidateName);
+          continue;
+        }
+        const html = `
 <!doctype html>
 <html lang="en">
   <head>
@@ -178,15 +208,11 @@ export const caShortlistedController = async (req, res) => {
       .header h1 { margin:0; font-size:20px; letter-spacing:0.2px; }
       .body { padding:24px; line-height:1.6; color:#0f172a; }
       .greeting { font-size:16px; margin-bottom:12px; }
-      .card { background:#f7fbff; border:1px solid #e6f0ff; padding:16px; border-radius:6px; margin:16px 0; }
       .muted { color:#475569; font-size:14px; }
-      .cta { display:inline-block; margin-top:16px; background:#0b6efd; color:#fff; text-decoration:none; padding:10px 16px; border-radius:6px; font-weight:600; }
-      .footer { padding:16px 24px; background:#f9fafb; color:#64748b; font-size:13px; text-align:center; }
-      .details { margin:8px 0; }
       .bold { font-weight:600; color:#0f172a; }
       @media (max-width:600px) {
         .body { padding:16px; }
-        .header, .footer { padding:16px; }
+        .header { padding:16px; }
       }
     </style>
   </head>
@@ -197,26 +223,30 @@ export const caShortlistedController = async (req, res) => {
       </div>
 
       <div class="body">
-        <p class="greeting">Hi <span class="bold">${shortlisted.name}</span>,</p>
+        <p class="greeting">Hi <span class="bold">${candidateName}</span>,</p>
 
         <p class="muted">
-          Thank you for participating in the first assessment round</span>. We’re pleased to inform you that you have <strong>successfully passed</strong> this round and have been shortlisted for the next stage, the next round mail will be coming soon.
+          Thank you for participating in the first assessment round. We're pleased to inform you that you have <strong>successfully passed</strong> this round and have been shortlisted for the next stage. The next round details will be coming soon.
         </p>
       </div>
     </div>
   </body>
 </html>
 `;
+        const notificationPayload = {
+          to: candidateEmail,
+          subject: "You Have Passed the assessment Round",
+          html,
+        };
 
-    const shortlisted = await CandidateScore.find({
-      "ai_analysis.final_recommendation": { $in: ["yes", "strong_yes"] },
-    }).populate("candidate_id job_id");
+        await axios.post(`${process.env.NOTIFICATION_SERVICE_URL}/api/notifications/send`, notificationPayload);
+        console.log("✅ Shortlist notification sent to:", candidateEmail);
+      } catch (emailError) {
+        console.warn("⚠️ Failed to send shortlist email:", emailError.message);
+        // Continue with other candidates even if one fails
+      }
+    }
 
-    await axios.post("${process.env.NOTIFICATION_SERVICE_URL}/api/notification/send", {
-      to: shortlisted.email,
-      subject: "You Have Passed the assessment Round",
-      html,
-    })
     res.status(200).json({
       success: true,
       total: shortlisted.length,

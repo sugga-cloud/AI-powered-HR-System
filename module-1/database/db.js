@@ -1,4 +1,6 @@
 import mongoose from 'mongoose';
+import dotenv from 'dotenv';
+dotenv.config();
 
 export const MONGODB_URI = process.env.MONGODB_URI;
 
@@ -13,16 +15,15 @@ export async function connectToDatabase(options = {}) {
 	if (isConnected || mongoose.connection.readyState === 1) {
 		return mongoose;
 	}
-	console.log(MONGODB_URI);
-	try{
-	const connectOptions = Object.assign({}, DEFAULT_OPTIONS, options);
+	try {
+		const connectOptions = Object.assign({}, DEFAULT_OPTIONS, options);
 
-	await mongoose.connect(MONGODB_URI, connectOptions);
-	isConnected = true;
-	console.log("Database connected successfully");
-	return mongoose;
-	}catch(err){
-		console.log("Database Error "+err);
+		await mongoose.connect(MONGODB_URI, connectOptions);
+		isConnected = true;
+		console.log("Database connected successfully");
+		return mongoose;
+	} catch (err) {
+		console.log("Database Error " + err);
 		return err;
 	}
 }

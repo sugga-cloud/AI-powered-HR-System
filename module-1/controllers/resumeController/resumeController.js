@@ -4,7 +4,6 @@ import ShortlistedCandidatesModel from '../../models/Resume Screening Models/Sho
 export const shortListController = async (req, res) => {
   try {
     const { jdId } = req.body;
-
     if (!jdId) {
       return res.status(400).json({ message: "jdId is required" });
     }
@@ -37,8 +36,6 @@ export const getAllCandidateController = async (req, res) => {
 export const getAllShortlistedController = async (req, res) => {
   try {
     const { jdId } = req.params;
-    console.log("jdId:", jdId);
-
     let candidates;
 
     if (!jdId || jdId === "all") {

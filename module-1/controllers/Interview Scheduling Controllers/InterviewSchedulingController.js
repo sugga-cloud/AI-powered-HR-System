@@ -37,7 +37,7 @@ export const createInterviewController = async (req, res) => {
         });
 
         // Notify candidate & interviewers
-        await axios.post(`${process.env.NOTIFICATION_SERVICE_URL}/api/notification/send`, {
+        await axios.post(`${process.env.NOTIFICATION_SERVICE_URL}/api/notifications/send`, {
             to: `${shortlistedCandidate.email}@gmail.com`,
             subject: "Interview Scheduled",
             html: `<p>Your interview has been scheduled.<br>Meeting Link: <a href="${meeting_link}">${meeting_link}</a></p>`,

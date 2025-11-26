@@ -1,6 +1,8 @@
 import Queue from "bull";
 import CandidateTest from "../models/Candidate Assessment Models/CandidateTestModel.js";
+import ShortlistedCandidatesModel from "../models/Resume Screening Models/ShortlistedCandidatesModel.js";
 import { generateAITest } from "../services/aiService.js"; // your AI test generation function
+import axios from "axios";
 import dotenv from "dotenv";
 dotenv.config();
 
@@ -51,8 +53,77 @@ TestQueue.process(async (job) => {
 });
 
 // Optional logging for dev/debugging
-TestQueue.on("completed", (job) => {
+TestQueue.on("completed", async (job) => {
     console.log(`✅ Test Job ${job.id} completed successfully.`);
+
+    try {
+        const { testId, userId } = job.data;
+
+        // Fetch the completed test
+        const completedTest = await CandidateTest.findById(testId);
+        if (!completedTest) {
+            console.warn("⚠️ Test not found for ID:", testId);
+            return;
+        }
+
+        // Fetch candidate details from ShortlistedCandidates
+        const shortlistedCandidate = await ShortlistedCandidatesModel.findOne({
+            candidateId: userId,
+        }).populate('candidateId');
+
+        if (!shortlistedCandidate) {
+            console.warn("⚠️ Shortlisted candidate not found for:", userId);
+            return;
+        }
+
+        const candidateEmail = shortlistedCandidate.candidateId?.email || shortlistedCandidate.email;
+        const candidateName = shortlistedCandidate.candidateId?.name || shortlistedCandidate.name;
+
+        if (!candidateEmail) {
+            console.warn("⚠️ Candidate email not found");
+            return;
+        }
+
+        // Generate test access link (you can customize this URL)
+        const testLink = `${process.env.FRONTEND_URL}/candidate/tests/${testId}`;
+
+        // Prepare notification payload
+        const notificationPayload = {
+            to: candidateEmail,
+            subject: "Your Assessment Test is Ready! 🎯",
+            html: `Dear ${candidateName},<br/><br/>
+Great news! Your assessment test has been successfully generated and is ready for you to take.<br/><br/>
+<strong>Test Details:</strong><br/>
+Total Questions: <strong>${completedTest.questions?.length || 0}</strong><br/>
+Total Marks: <strong>${completedTest.total_marks}</strong><br/>
+Duration: <strong>${completedTest.duration_minutes || 30} minutes</strong><br/>
+Test Type: <strong>${completedTest.test_type}</strong><br/><br/>
+
+<strong>How to Access Your Test:</strong><br/>
+Click the link below to access your test portal:<br/>
+<a href="${testLink}" style="color: #0b6efd; text-decoration: none;"><strong>Start Your Assessment</strong></a><br/><br/>
+
+<strong>Your Login Credentials:</strong><br/>
+<strong>Login ID:</strong> ${shortlistedCandidate.loginId}<br/>
+<strong>Password:</strong> ${shortlistedCandidate.password}<br/><br/>
+
+<strong>Important Notes:</strong><br/>
+✓ Please complete the test within the given duration<br/>
+✓ Save your answers regularly to avoid losing progress<br/>
+✓ You will receive your results and feedback after submission<br/><br/>
+
+If you have any issues accessing the test, please contact our HR team.<br/><br/>
+Best regards,<br/>
+HR Assessment Team`,
+        };
+
+        console.log("📧 Sending test completion notification to:", candidateEmail);
+        await axios.post(`${process.env.NOTIFICATION_SERVICE_URL}/api/notifications/send`, notificationPayload);
+        console.log("✅ Test notification email sent successfully for candidate:", candidateName);
+    } catch (emailError) {
+        console.warn("⚠️ Failed to send test completion email:", emailError.message);
+        // Don't throw error, just warn
+    }
 });
 
 TestQueue.on("failed", (job, err) => {
