@@ -21,7 +21,7 @@ class AI {
         "Content-Type": "application/json",
       },
       body: JSON.stringify({
-        model: "google/gemini-2.5-flash-lite",
+        model: "x-ai/grok-4.1-fast:free",
         messages, // send the array of messages directly
         answer_format, // optional, your AI backend can handle
       }),
