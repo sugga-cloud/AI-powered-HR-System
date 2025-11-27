@@ -17,6 +17,13 @@ await connectToDatabase();
 app.get('/healthz', (req, res) => {
     res.send('HR System API is running!');
 });
+
+// Debug middleware
+app.use((req, res, next) => {
+    console.log(`🔍 ${req.method} ${req.path}`);
+    next();
+});
+
 app.use('/api', apiRouter);
 
 // Basic error handling
@@ -25,9 +32,10 @@ app.use((err, req, res, next) => {
     res.status(500).json({ message: 'Something went wrong!' });
 });
 
-// Basic Route for testing
-app.get('/healthz', (req, res) => {
-    res.send('HR System API is running!');
+// 404 handler
+app.use((req, res) => {
+    console.log(`❌ 404 - ${req.method} ${req.path}`);
+    res.status(404).json({ message: 'Route not found', path: req.path });
 });
 
 // Start Server

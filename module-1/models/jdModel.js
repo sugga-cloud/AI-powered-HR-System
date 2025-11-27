@@ -25,17 +25,17 @@ const jdSchema = new mongoose.Schema(
       default: "pending",
     },
     platformPosts: [
-  {
-    platform: String,
-    success: Boolean,
-    message: String,
-    status: { type: String, enum: ["success", "failed"] },
-    postedAt: { type: Date, default: Date.now },
-  },
-],
+      {
+        platform: String,
+        success: Boolean,
+        message: String,
+        status: { type: String, enum: ["success", "failed"] },
+        postedAt: { type: Date, default: Date.now },
+      },
+    ],
 
   },
   { timestamps: true }
 );
 
-export default mongoose.model("JD", jdSchema);
+export default mongoose.model("JobRequisition", jdSchema);

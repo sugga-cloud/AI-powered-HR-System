@@ -8,8 +8,13 @@ import {
 
 const router = Router();
 
-// Create interview schedule (AI-assisted)
-router.post("/create", createInterviewController);
+console.log("📋 Interview Scheduling Routes initialized");
+
+// Create interview schedule (AI-assisted) - supports both single and batch scheduling
+router.post("/create", (req, res, next) => {
+    console.log("🎯 POST /create - Interview creation endpoint called");
+    next();
+}, createInterviewController);
 
 // Get candidate or interviewer schedules
 router.get("/list", getInterviewsController);
