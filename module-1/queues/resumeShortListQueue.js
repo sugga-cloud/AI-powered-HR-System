@@ -2,9 +2,9 @@ import Queue from 'bull';
 import shortListedCandidatesForJD from '../services/aiResumeShortListService.js';
 
 const redis = {
-  port: process.env.REDIS_PORT || 17487,
-  host: process.env.REDIS_HOST || "redis-17487.crce217.ap-south-1-1.ec2.redns.redis-cloud.com",
-  password: process.env.REDIS_PASSWORD || "PUPIU547h1BiS2MWjaym3nBSzaxmyry6",
+  port: process.env.REDIS_PORT || 18379,
+  host: process.env.REDIS_HOST || "redis-18379.c326.us-east-1-3.ec2.cloud.redislabs.com",
+  password: process.env.REDIS_PASSWORD || "sXcQ6UXWVwZplw7oCswvNesMGmb5jXM6",
   username: process.env.REDIS_USERNAME || "default",
 };
 

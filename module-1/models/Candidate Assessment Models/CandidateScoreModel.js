@@ -55,6 +55,11 @@ const candidateScoreSchema = new mongoose.Schema(
       ref: "User",
     },
     evaluated_at: Date,
+    shortlist_notification_sent: {
+      type: Boolean,
+      default: false,
+    },
+    shortlist_notification_sent_at: Date,
   },
   { timestamps: { createdAt: "created_at", updatedAt: "updated_at" } }
 );
