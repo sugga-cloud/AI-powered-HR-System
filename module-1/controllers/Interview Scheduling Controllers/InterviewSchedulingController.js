@@ -204,8 +204,17 @@ export const createInterviewController = async (req, res) => {
 export const getInterviewsController = async (req, res) => {
     try {
         const { user_id, role } = req.query; // role can be 'candidate' or 'interviewer'
+        console.log("📥 Get Interviews Request for user:", user_id, "as", role);
         let interviews;
-        if (role === "candidate") {
+
+        // If user_id is not provided, return all interviews (admin/global view)
+        if (!user_id) {
+            console.warn("⚠️ getInterviewsController: user_id not provided - returning all interviews");
+            interviews = await InterviewSchedule
+                .find({})
+                .populate("interviewer_ids", "name email")
+                .populate("candidate_id", "name email");
+        } else if (role === "candidate") {
             interviews = await InterviewSchedule
                 .find({ candidate_id: user_id })
                 .populate("interviewer_ids", "name email")
