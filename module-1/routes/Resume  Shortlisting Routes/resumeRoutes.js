@@ -6,6 +6,6 @@ router.post('/shortlist',shortListController);
 router.get('/healthz',(res,req)=>{
     return res.status(200).json({message:"Working fine"});
 })
-router.get('/getAllCandidates',getAllCandidateController);
-router.get('/getAllShortListedCandidates',getAllShortlistedController);
+router.get('/getAllCandidates/:jdId',getAllCandidateController);
+router.get('/getAllShortListedCandidates/:jdId',getAllShortlistedController);
 export default router;

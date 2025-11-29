@@ -4,6 +4,8 @@ import CandidateScore from "../../models/Candidate Assessment Models/CandidateSc
 import TestQueue from "../../queues/testQueue.js"; // Bull queue for async processing
 import axios from "axios";
 import ShortlistedCandidatesModel from "../../models/Resume Screening Models/ShortlistedCandidatesModel.js";
+import JD from "../../models/jdModel.js"; // Import JD model (referenced as JobRequisition in schema)
+import Candidate from "../../models/candidateModel.js"; // Import Candidate model for populate
 
 /**
  * @desc Initialize test for candidate (create test entry, generate credentials)
@@ -37,12 +39,23 @@ Each question should be clear, professional, and have 4 options with one correct
       userId: candidate_id,
     });
     const shortlistedCandidate = await ShortlistedCandidatesModel.findOne({
-      candidate_id,
-      job_id,
-    });
+      candidateId: candidate_id,
+      jobId: job_id,
+    }).populate('candidateId');
 
     if (!shortlistedCandidate) {
+      console.warn("⚠️ Shortlisted candidate not found for:", { candidate_id, job_id });
       return res.status(404).json({ success: false, message: "Candidate not found in shortlisted list" });
+    }
+
+    // Get email and name from populated candidateId
+    const candidateEmail = shortlistedCandidate.candidateId?.email || shortlistedCandidate.email;
+    const candidateName = shortlistedCandidate.candidateId?.name || shortlistedCandidate.name;
+
+    // Verify email exists
+    if (!candidateEmail) {
+      console.warn("⚠️ Candidate email not found for candidate:", candidate_id);
+      return res.status(400).json({ success: false, message: "Candidate email not found" });
     }
 
     let [loginId, password] = (() => {
@@ -56,15 +69,23 @@ Each question should be clear, professional, and have 4 options with one correct
     await shortlistedCandidate.save();
 
     // 4️⃣ Notify candidate (optional)
-    await axios.post("${process.env.NOTIFICATION_SERVICE_URL}/api/notification/send", {
-      to: shortlistedCandidate.email,
-      subject: "Your Candidate Assessment Test is Being Prepared",
-      html: `Dear ${shortlistedCandidate.name},<br/><br/>
+    try {
+      const notificationPayload = {
+        to: candidateEmail,
+        subject: "Your Candidate Assessment Test is Being Prepared",
+        html: `Dear ${candidateName},<br/><br/>
 Your assessment test for the applied role is being prepared. You will receive another email once it's ready.<br/><br/>
-Login Credentials:<br/> <strong>Login ID:</strong> ${shortlistedCandidate.loginId}<br/> <strong>Password:</strong> ${shortlistedCandidate.password}<br/><br/>
+Login Credentials:<br/> <strong>Login ID:</strong> ${loginId}<br/> <strong>Password:</strong> ${password}<br/><br/>
 Best regards,<br/>
 HR Team`,
-    })
+      };
+
+      console.log("📧 Sending notification to:", candidateEmail);
+      await axios.post(`${process.env.NOTIFICATION_SERVICE_URL}/api/notifications/send`, notificationPayload);
+      console.log("✅ Notification queued successfully for:", candidateEmail);
+    } catch (emailError) {
+      console.warn("⚠️ Email notification failed, but test will proceed:", emailError.message);
+    }
 
     // 5️⃣ Send response back immediately
     res.status(201).json({
@@ -81,25 +102,75 @@ HR Team`,
 
 /**
  * @desc Fetch test details for candidate
- * @route GET /api/candidate-assessment/test
+ * @route GET /api/ca/test
+ * @query candidate_id - The candidate ID to fetch test for
  */
 export const caGetTestController = async (req, res) => {
   try {
     const { candidate_id } = req.query;
+
+    if (!candidate_id) {
+      return res.status(400).json({
+        success: false,
+        message: "candidate_id query parameter is required"
+      });
+    }
 
     const test = await CandidateTest.findOne({
       candidate_id,
       test_status: { $in: ["pending", "in_progress"] },
     });
 
-    if (!test)
-      return res
-        .status(404)
-        .json({ success: false, message: "No test found for candidate" });
+    if (!test) {
+      return res.status(404).json({
+        success: false,
+        message: "No pending test found for candidate"
+      });
+    }
 
     res.status(200).json({ success: true, test });
   } catch (error) {
     console.error("Get Test Error:", error);
+    res.status(500).json({ success: false, message: "Server error" });
+  }
+};
+
+/**
+ * @desc Fetch test by test ID (for direct access from email link)
+ * @route GET /api/ca/test/:test_id
+ * @param test_id - The test ID from URL params
+ */
+export const caGetTestByIdController = async (req, res) => {
+  try {
+    const { test_id } = req.params;
+
+    if (!test_id) {
+      return res.status(400).json({
+        success: false,
+        message: "test_id parameter is required"
+      });
+    }
+
+    const test = await CandidateTest.findById(test_id);
+
+    if (!test) {
+      return res.status(404).json({
+        success: false,
+        message: "Test not found"
+      });
+    }
+
+    // Check if test is in a valid state for taking
+    if (!["pending", "in_progress", "ai_generated"].includes(test.test_status)) {
+      return res.status(400).json({
+        success: false,
+        message: `Test cannot be taken in ${test.test_status} status`
+      });
+    }
+
+    res.status(200).json({ success: true, test });
+  } catch (error) {
+    console.error("Get Test By ID Error:", error);
     res.status(500).json({ success: false, message: "Server error" });
   }
 };
@@ -136,11 +207,20 @@ export const caSubmitTestController = async (req, res) => {
 
     // Call AI evaluation microservice for deeper insights
     // const aiResult = await aiEvaluateTest(test._id);
+    const aiResult = {}; // Initialize as empty object
+
+    // Get job_id from test, or from candidate if test doesn't have it
+    let jobId = test.job_id;
+    if (!jobId) {
+      const candidate = await Candidate.findById(test.candidate_id);
+      jobId = candidate?.job_id;
+      console.log("⚠️ Job ID was missing from test, fetched from candidate:", jobId);
+    }
 
     // Save candidate score document
     const scoreDoc = await CandidateScore.create({
       candidate_id: test.candidate_id,
-      job_id: test.job_id,
+      job_id: jobId,
       test_id: test._id,
       total_score: obtained,
       percentage: (obtained / test.total_marks) * 100,
@@ -163,9 +243,67 @@ export const caSubmitTestController = async (req, res) => {
  * @route GET /api/candidate-assessment/shortlisted
  */
 export const caShortlistedController = async (req, res) => {
-
   try {
-    const html = `
+    const shortlisted = await CandidateScore.find({
+      "ai_analysis.final_recommendation": { $in: ["yes", "strong_yes", "neutral"] },
+    }).populate("candidate_id job_id");
+
+    // Fix job_id if it's null by fetching from candidate document
+    for (let i = 0; i < shortlisted.length; i++) {
+      if (!shortlisted[i].job_id && shortlisted[i].candidate_id?.job_id) {
+        shortlisted[i].job_id = shortlisted[i].candidate_id.job_id;
+        console.log("🔧 Fixed missing job_id for candidate:", shortlisted[i].candidate_id?.name);
+      }
+    }
+
+    console.log("📊 Shortlisted Candidates Retrieved:", {
+      count: shortlisted.length,
+      sample: shortlisted[0] ? {
+        _id: shortlisted[0]._id,
+        candidate_id: shortlisted[0].candidate_id?.name,
+        job_id: shortlisted[0].job_id,
+        job_id_type: typeof shortlisted[0].job_id,
+        recommendation: shortlisted[0].ai_analysis?.final_recommendation,
+      } : "No candidates",
+    });
+
+    res.status(200).json({
+      success: true,
+      total: shortlisted.length,
+      shortlisted,
+    });
+  } catch (error) {
+    console.error("Shortlisted Fetch Error:", error);
+    res.status(500).json({ success: false, message: "Server error" });
+  }
+};
+
+/**
+ * @desc Send shortlist notifications to candidates who haven't been notified yet
+ * @route POST /api/candidate-assessment/send-shortlist-notifications
+ */
+export const caSendShortlistNotificationsController = async (req, res) => {
+  try {
+    // Fetch shortlisted candidates who haven't been notified yet
+    const candidatesToNotify = await CandidateScore.find({
+      "ai_analysis.final_recommendation": { $in: ["yes", "strong_yes", "neutral"] },
+      shortlist_notification_sent: { $ne: true },
+    }).populate("candidate_id job_id");
+
+    let notifiedCount = 0;
+
+    // Send email to each candidate who needs notification
+    for (const candidate of candidatesToNotify) {
+      try {
+        const candidateName = candidate.candidate_id?.name || "Candidate";
+        const candidateEmail = candidate.candidate_id?.email;
+
+        if (!candidateEmail) {
+          console.warn("⚠️ Email not found for candidate:", candidateName);
+          continue;
+        }
+
+        const html = `
 <!doctype html>
 <html lang="en">
   <head>
@@ -178,52 +316,94 @@ export const caShortlistedController = async (req, res) => {
       .header h1 { margin:0; font-size:20px; letter-spacing:0.2px; }
       .body { padding:24px; line-height:1.6; color:#0f172a; }
       .greeting { font-size:16px; margin-bottom:12px; }
-      .card { background:#f7fbff; border:1px solid #e6f0ff; padding:16px; border-radius:6px; margin:16px 0; }
       .muted { color:#475569; font-size:14px; }
-      .cta { display:inline-block; margin-top:16px; background:#0b6efd; color:#fff; text-decoration:none; padding:10px 16px; border-radius:6px; font-weight:600; }
-      .footer { padding:16px 24px; background:#f9fafb; color:#64748b; font-size:13px; text-align:center; }
-      .details { margin:8px 0; }
       .bold { font-weight:600; color:#0f172a; }
       @media (max-width:600px) {
         .body { padding:16px; }
-        .header, .footer { padding:16px; }
+        .header { padding:16px; }
       }
     </style>
   </head>
   <body>
     <div class="container">
       <div class="header">
-        <h1>Congratulations — You’re Shortlisted!</h1>
+        <h1>Congratulations - You're Shortlisted!</h1>
       </div>
 
       <div class="body">
-        <p class="greeting">Hi <span class="bold">${shortlisted.name}</span>,</p>
+        <p class="greeting">Hi <span class="bold">${candidateName}</span>,</p>
 
         <p class="muted">
-          Thank you for participating in the first assessment round</span>. We’re pleased to inform you that you have <strong>successfully passed</strong> this round and have been shortlisted for the next stage, the next round mail will be coming soon.
+          Thank you for participating in the first assessment round. We're pleased to inform you that you have <strong>successfully passed</strong> this round and have been shortlisted for the next stage. The next round details will be coming soon.
         </p>
       </div>
     </div>
   </body>
 </html>
 `;
+        const notificationPayload = {
+          to: candidateEmail,
+          subject: "You Have Passed the assessment Round",
+          html,
+        };
 
-    const shortlisted = await CandidateScore.find({
-      "ai_analysis.final_recommendation": { $in: ["yes", "strong_yes"] },
-    }).populate("candidate_id job_id");
+        await axios.post(`${process.env.NOTIFICATION_SERVICE_URL}/api/notifications/send`, notificationPayload);
+        console.log("✅ Shortlist notification sent to:", candidateEmail);
 
-    await axios.post("${process.env.NOTIFICATION_SERVICE_URL}/api/notification/send", {
-      to: shortlisted.email,
-      subject: "You Have Passed the assessment Round",
-      html,
-    })
+        // Mark candidate as notified
+        candidate.shortlist_notification_sent = true;
+        candidate.shortlist_notification_sent_at = new Date();
+        await candidate.save();
+
+        notifiedCount++;
+      } catch (emailError) {
+        console.warn("⚠️ Failed to send shortlist email:", emailError.message);
+        // Continue with other candidates even if one fails
+      }
+    }
+
     res.status(200).json({
       success: true,
-      total: shortlisted.length,
+      message: `Sent ${notifiedCount} notification(s)`,
+      notified_count: notifiedCount,
+    });
+  } catch (error) {
+    console.error("Send Shortlist Notifications Error:", error);
+    res.status(500).json({ success: false, message: "Server error" });
+  }
+};
+
+/**
+ * @desc Fetch a single assessment detail by ID
+ * @route GET /api/ca/shortlisted/:id
+ * @param id - The CandidateScore document ID
+ */
+export const caGetAssessmentDetailController = async (req, res) => {
+  try {
+    const { id } = req.params;
+
+    if (!id) {
+      return res.status(400).json({
+        success: false,
+        message: "Assessment ID is required",
+      });
+    }
+
+    const shortlisted = await CandidateScore.findById(id).populate("candidate_id job_id");
+
+    if (!shortlisted) {
+      return res.status(404).json({
+        success: false,
+        message: "Assessment not found",
+      });
+    }
+
+    res.status(200).json({
+      success: true,
       shortlisted,
     });
   } catch (error) {
-    console.error("Shortlisted Fetch Error:", error);
+    console.error("Get Assessment Detail Error:", error);
     res.status(500).json({ success: false, message: "Server error" });
   }
 };

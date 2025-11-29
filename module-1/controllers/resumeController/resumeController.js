@@ -4,7 +4,6 @@ import ShortlistedCandidatesModel from '../../models/Resume Screening Models/Sho
 export const shortListController = async (req, res) => {
   try {
     const { jdId } = req.body;
-
     if (!jdId) {
       return res.status(400).json({ message: "jdId is required" });
     }
@@ -21,9 +20,12 @@ export const shortListController = async (req, res) => {
 export const getAllCandidateController = async (req, res) => {
   try {
     // Logic to fetch all candidates from the database
-    const { jdId } = req.body;
-
-    const candidates = await CandidateModel.find({job_id:jdId}); // Assuming CandidateModel is defined and imported  
+    const { jdId } = req.params;
+    let candidates;
+    if(!jdId || jdId==='all')
+       candidates = await CandidateModel.find(); // Assuming CandidateModel is defined and imported  
+    else candidates = await CandidateModel.find({job_id:jdId}); // Assuming CandidateModel is defined and imported  
+    console.log(jdId);
     return res.status(200).json({ candidates });
   } catch (error) {
     console.error("Error in getAllCandidateController:", error);
@@ -33,13 +35,24 @@ export const getAllCandidateController = async (req, res) => {
 
 export const getAllShortlistedController = async (req, res) => {
   try {
-    // Logic to fetch all candidates from the database
-    const { jdId } = req.body;
+    const { jdId } = req.params;
+    let candidates;
 
-    const candidates = await ShortlistedCandidatesModel.find({jobId:jdId}).populate("candidateId"); // Assuming CandidateModel is defined and imported  
+    if (!jdId || jdId === "all") {
+      // Return ALL shortlisted candidates
+      candidates = await ShortlistedCandidatesModel
+        .find()
+        .populate("candidateId");
+    } else {
+      // Return shortlisted candidates for a specific job
+      candidates = await ShortlistedCandidatesModel
+        .find({ jobId: jdId })
+        .populate("candidateId");
+    }
+
     return res.status(200).json({ candidates });
   } catch (error) {
-    console.error("Error in getAllCandidateController:", error);
+    console.error("Error in getAllShortlistedController:", error);
     return res.status(500).json({ message: "Internal server error" });
   }
 };
