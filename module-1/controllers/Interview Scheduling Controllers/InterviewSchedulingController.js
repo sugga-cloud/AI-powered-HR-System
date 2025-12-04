@@ -14,14 +14,6 @@ export const createInterviewController = async (req, res) => {
             batch = false, // NEW: Add batch flag to schedule for all shortlisted candidates
         } = req.body;
 
-        console.log("📥 Interview Create Request:", {
-            candidate_id,
-            job_id,
-            batch,
-            mode,
-            interviewer_ids_count: interviewer_ids?.length || 0,
-        });
-
         // Validate required fields
         if (!job_id) {
             console.warn("⚠️ Missing job_id in request");
@@ -54,8 +46,6 @@ export const createInterviewController = async (req, res) => {
 
         // If batch mode, schedule for all shortlisted candidates
         if (batch) {
-            console.log("🔄 Batch mode: Scheduling for all shortlisted candidates");
-            
             // Import CandidateScore model to get CA shortlisted candidates
             const CandidateScoreModel = await import("../../models/Candidate Assessment Models/CandidateScoreModel.js").then(m => m.default);
 
@@ -64,8 +54,6 @@ export const createInterviewController = async (req, res) => {
                 job_id,
                 "ai_analysis.final_recommendation": { $in: ["yes", "strong_yes", "neutral"] },
             }).populate("candidate_id");
-
-            console.log(`📊 Found ${passedCandidates.length} shortlisted candidates for batch scheduling`);
 
             if (passedCandidates.length === 0) {
                 console.warn("⚠️ No shortlisted candidates found for job:", job_id);
@@ -119,8 +107,6 @@ export const createInterviewController = async (req, res) => {
                         interview_id: interview._id,
                         status: "scheduled",
                     });
-
-                    console.log("✅ Interview scheduled for:", candidateName);
                 } catch (error) {
                     failedCount++;
                     console.warn("⚠️ Failed to schedule interview for candidate:", error.message);
@@ -142,8 +128,6 @@ export const createInterviewController = async (req, res) => {
         }
 
         // SINGLE CANDIDATE MODE
-        console.log("👤 Single candidate mode: Scheduling for candidate:", candidate_id);
-        
         if (!candidate_id) {
             console.warn("⚠️ Missing candidate_id in single mode");
             return res.status(400).json({
@@ -181,7 +165,6 @@ export const createInterviewController = async (req, res) => {
                 subject: "Interview Scheduled",
                 html: `<p>Dear ${candidate.name},<br><br>Your interview has been scheduled.<br>Meeting Link: <a href="${meeting_link}">${meeting_link}</a><br><br>Best regards,<br>HR Team</p>`,
             });
-            console.log("📧 Email sent to:", candidate.email);
         } catch (emailError) {
             console.warn("⚠️ Email send failed:", emailError.message);
         }
@@ -193,8 +176,8 @@ export const createInterviewController = async (req, res) => {
         });
     } catch (error) {
         console.error("❌ Interview Creation Error:", error);
-        res.status(500).json({ 
-            success: false, 
+        res.status(500).json({
+            success: false,
             message: error.message || "Server error",
             error: process.env.NODE_ENV === 'development' ? error.stack : undefined,
         });
@@ -203,30 +186,11 @@ export const createInterviewController = async (req, res) => {
 
 export const getInterviewsController = async (req, res) => {
     try {
-        const { user_id, role } = req.query; // role can be 'candidate' or 'interviewer'
-        console.log("📥 Get Interviews Request for user:", user_id, "as", role);
-        let interviews;
+        const interviews = await InterviewSchedule
+            .find({})
+            .populate("interviewer_ids", "name email")
+            .populate("candidate_id", "name email");
 
-        // If user_id is not provided, return all interviews (admin/global view)
-        if (!user_id) {
-            console.warn("⚠️ getInterviewsController: user_id not provided - returning all interviews");
-            interviews = await InterviewSchedule
-                .find({})
-                .populate("interviewer_ids", "name email")
-                .populate("candidate_id", "name email");
-        } else if (role === "candidate") {
-            interviews = await InterviewSchedule
-                .find({ candidate_id: user_id })
-                .populate("interviewer_ids", "name email")
-                .populate("candidate_id", "name email");
-        } else if (role === "interviewer") {
-            interviews = await InterviewSchedule
-                .find({ interviewer_ids: user_id })
-                .populate("interviewer_ids", "name email")
-                .populate("candidate_id", "name email");
-        } else {
-            return res.status(400).json({ success: false, message: "Invalid role" });
-        }
         res.status(200).json({ success: true, interviews });
     } catch (error) {
         console.error("Get Interviews Error:", error);
