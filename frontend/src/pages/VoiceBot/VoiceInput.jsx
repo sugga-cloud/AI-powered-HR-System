@@ -64,7 +64,7 @@ const VoiceInput = ({ apiUrl = "http://localhost:3000/api/agent" }) => {
       const res = await fetch(apiUrl, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ text, sessionId: sessionId.current }),
+        body: JSON.stringify({ text, sessionId: sessionId.current,employeeId: "EMP001" }),
       });
 
       setResponse("Let me check for you");
