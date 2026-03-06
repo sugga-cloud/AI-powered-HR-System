@@ -8,13 +8,32 @@ const ai = new AI({
 
 const MAX_STEPS = 8; // Increased slightly to allow for Lookup -> Schema -> Action
 
-export const runAgent = async ({ userInput, context, sessionId, employeeId }) => {
+// Flows
+const AGENT_FLOWS = {
+    WELCOME: `You are Aurion in 'Greeting Mode'. Be cheerful and welcoming. 
+              Briefly mention that you are checking for new HR updates. 
+              Your first action should be to fetch new/pending requests to brief the user.`,
+    
+    DISCOVERY: `You are in 'Analysis Mode'. You have fetched new data. 
+                Summarize pending leave requests or employee updates clearly for the HR manager.
+                Ask which one they would like to address first.`,
+    
+    EXECUTION: `You are in 'Action Mode'. The HR manager has given a command.
+                Strictly follow the Relational Data Rule: Convert Business IDs to ObjectIds before writing.
+                Perform the tool call and confirm success.`
+};
+
+
+export const runAgent = async ({ userInput, context, sessionId, employeeId, flowType = "WELCOME" }) => {
     let step = 0;
     const memoryMessages = await loadMemory(sessionId);
-
+    // Dynamic Instruction Selection
+    const currentFlowPrompt = AGENT_FLOWS[flowType] || AGENT_FLOWS.EXECUTION;
     // Added explicit instruction to NEVER describe the process
     const systemInstruction = `
+    
 You are an autonomous HR Workforce Agent named Aurion.
+${currentFlowPrompt}
 Available tools: ${listToolsWithSignatures().join("\n")}
 Available Data Models: ${listModels().join(", ")}
 

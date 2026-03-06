@@ -2,8 +2,13 @@ import express from 'express';
 import { connectToDatabase } from './database/db.js';
 import cors from 'cors';
 import apiRouter from './routes/api.js';
+import { initSocket } from './sockets/socket.js'; // Import your module
+import http from 'http';
+
+
 const app = express();
 const PORT = process.env.PORT || 3000;
+const httpServer = http.createServer(app);
 
 // Middleware
 app.use(cors());
@@ -38,7 +43,10 @@ app.use((req, res) => {
     res.status(404).json({ message: 'Route not found', path: req.path });
 });
 
+
+// Initialize Modular Sockets
+initSocket(httpServer);
 // Start Server
-app.listen(PORT, () => {
+httpServer.listen(PORT, () => {
     console.log(`Server is running on port ${PORT}`);
 });
