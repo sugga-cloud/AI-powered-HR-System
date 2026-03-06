@@ -12,4 +12,5 @@ const Schema = new mongoose.Schema(
   { timestamps: true }
 );
 
-export default mongoose.model('CandidateApplied', Schema);
+const CandidateApplied = mongoose.models.CandidateApplied || mongoose.model('CandidateApplied', Schema);
+export default CandidateApplied;

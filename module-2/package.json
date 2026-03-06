@@ -1,0 +1,28 @@
+{
+  "name": "module-2",
+  "version": "1.0.0",
+  "description": "module for workforce Management",
+  "main": "index.js",
+  "type": "module",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "start": "nodemon index.js"
+  },
+  "author": "",
+  "license": "ISC",
+  "dependencies": {
+    "@google/genai": "^1.43.0",
+    "@google/generative-ai": "^0.24.1",
+    "axios": "^1.6.0",
+    "bcryptjs": "^2.4.3",
+    "bull": "^4.16.5",
+    "cors": "^2.8.5",
+    "dotenv": "^17.2.3",
+    "express": "^5.1.0",
+    "jsonwebtoken": "^9.0.2",
+    "mongoose": "^8.19.1",
+    "multer": "^2.0.2",
+    "node-fetch": "^3.3.2",
+    "nodemon": "^3.1.10"
+  }
+}

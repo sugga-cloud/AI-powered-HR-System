@@ -57,6 +57,7 @@ export async function jdUpdateController(req, res) {
     const { jdId, prompt, aiResponse, status, approvalStatus } = req.body;
 
     if (!jdId) {
+      console.log("JD update error: JD ID is missing");
       return res.status(400).json({ error: "JD ID is required" });
     }
 
