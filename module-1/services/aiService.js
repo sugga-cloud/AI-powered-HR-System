@@ -254,13 +254,17 @@ Now respond strictly in JSON.`,
  */
 import pdfParse from "pdf-parse-fixed";
 
-export async function getCandidateDetailsFromResume(jdId, resumeUrl) {
+export async function getCandidateDetailsFromResume(jdId, resumeUrl, buffer) {
   try {
     console.log("🔍 Starting resume parsing for:", resumeUrl);
 
     // 1️⃣ Download resume
-    const response = await axios.get(resumeUrl, { responseType: "arraybuffer" });
-    const pdfBuffer = Buffer.from(response.data);
+    if (!buffer) {
+      console.log("⬇️ Downloading resume from URL...");
+      const response = await axios.get(resumeUrl, { responseType: "arraybuffer" });
+      buffer = response.data;
+    }
+    const pdfBuffer = Buffer.from(buffer);
 
     // 2️⃣ Parse PDF text
     const data = await pdfParse(pdfBuffer);

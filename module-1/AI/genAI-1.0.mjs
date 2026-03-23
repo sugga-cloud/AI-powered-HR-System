@@ -14,6 +14,7 @@ class AI {
    * @returns {Promise<string|Object>}
    */
   async ask(messages, answer_format = "text") {
+    console.log("starting with model : "+process.env.OPEN_ROUTER_MODEL)
     const response = await fetch(this.endpoint, {
       method: "POST",
       headers: {
@@ -21,13 +22,13 @@ class AI {
         "Content-Type": "application/json",
       },
       body: JSON.stringify({
-        model: "x-ai/grok-4.1-fast:free",
+        model: process.env.OPEN_ROUTER_MODEL || "gpt-4o-mini", // default to gpt-4o-mini if not set
         messages, // send the array of messages directly
         answer_format, // optional, your AI backend can handle
       }),
     });
     const data = await response.json();
-
+    console.log("Raw AI Response:", data); // Log the raw response for debugging
     if (!data.choices || !data.choices[0]?.message?.content) {
       throw new Error("AI did not return a valid response");
     }

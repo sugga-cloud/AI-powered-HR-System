@@ -3,18 +3,10 @@ import CandidateTest from "../models/Candidate Assessment Models/CandidateTestMo
 import ShortlistedCandidatesModel from "../models/Resume Screening Models/ShortlistedCandidatesModel.js";
 import { generateAITest } from "../services/aiService.js"; // your AI test generation function
 import axios from "axios";
-import dotenv from "dotenv";
-dotenv.config();
-
-const redis = {
-    port: process.env.REDIS_PORT || 17487,
-    host: process.env.REDIS_HOST || "redis-17487.crce217.ap-south-1-1.ec2.redns.redis-cloud.com",
-    password: process.env.REDIS_PASSWORD || "PUPIU547h1BiS2MWjaym3nBSzaxmyry6",
-    username: process.env.REDIS_USERNAME || "default",
-};
+import redisClient from "../config/redisClient.js";
 
 // 🧠 Create a Bull queue for test generation
-const TestQueue = new Queue("test-queue", { redis });
+const TestQueue = new Queue("test-queue", { redis: redisClient });
 
 TestQueue.process(async (job) => {
     const { testId, prompt, userId, previousResponse } = job.data;

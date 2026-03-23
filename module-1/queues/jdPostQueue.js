@@ -1,16 +1,10 @@
 import Queue from "bull";
 import jdPostWorker from "../services/jdPostService.js";
-import dotenv from "dotenv";
-dotenv.config();
+import redisClient from "../config/redisClient.js";
 
 // Redis connection
 const JDPostQueue = new Queue("jd-post-queue", {
-  redis: {
-    host: process.env.REDIS_HOST,
-    port: process.env.REDIS_PORT,
-    password: process.env.REDIS_PASSWORD,
-    username: process.env.REDIS_USERNAME,
-  },
+  redis: redisClient,
 });
 
 // Worker
