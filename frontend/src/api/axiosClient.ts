@@ -1,14 +1,14 @@
 import axios from 'axios';
 
 const axiosClient = axios.create({
-  baseURL: import.meta.env.VITE_MAIN_API_URL || 'http://localhost:5000/api',
+  baseURL: import.meta.env.VITE_MAIN_API_URL || 'https://backend-1s6m.onrender.com/api',
   headers: {
     'Content-Type': 'application/json',
   },
 });
 
 const authClient = axios.create({
-  baseURL: import.meta.env.VITE_AUTH_API_URL || 'http://localhost:5000/api',
+  baseURL: import.meta.env.VITE_AUTH_API_URL || 'https://backend-1s6m.onrender.com/api',
   headers: {
     'Content-Type': 'application/json',
   },

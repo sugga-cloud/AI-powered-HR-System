@@ -11,7 +11,7 @@ import {
   XAxis, YAxis, Tooltip, Legend, ResponsiveContainer, Sector
 } from "recharts";
 
-const API = (import.meta.env.VITE_MAIN_API_URL || "http://localhost:5000/api") + "/analytics";
+const API = (import.meta.env.VITE_MAIN_API_URL || "https://backend-1s6m.onrender.com/api") + "/analytics";
 const COLORS = ["#6366f1", "#22d3ee", "#f59e0b", "#10b981", "#f43f5e", "#a78bfa"];
 
 const renderActiveShape = (props: any) => {
@@ -54,7 +54,7 @@ export default function AnalyticsDashboard() {
         setHeadcount(hcRes.data || []);
         setProjectHealth(projRes.data || []);
         setLeaveDistribution(ldRes.data || []);
-      } catch {}
+      } catch { }
       setLoading(false);
     };
     fetchAll();

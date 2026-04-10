@@ -10,7 +10,7 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 
-const API = import.meta.env.VITE_MAIN_API_URL || "http://localhost:5000/api";
+const API = import.meta.env.VITE_MAIN_API_URL || "https://backend-1s6m.onrender.com/api";
 const EMPLOYEE_ID = "EMP001"; // TODO: replace with auth store
 
 const typeIcon: Record<string, JSX.Element> = {
@@ -35,7 +35,7 @@ export function NotificationCenter() {
       const data = await res.json();
       setNotifications(data.data || []);
       setUnreadCount(data.unreadCount || 0);
-    } catch {}
+    } catch { }
   }, []);
 
   useEffect(() => {
@@ -50,7 +50,7 @@ export function NotificationCenter() {
       await fetch(`${API}/notifications/${EMPLOYEE_ID}/read-all`, { method: "PATCH" });
       setUnreadCount(0);
       setNotifications(prev => prev.map(n => ({ ...n, read: true })));
-    } catch {}
+    } catch { }
   };
 
   const markOneRead = async (id: string) => {
@@ -58,7 +58,7 @@ export function NotificationCenter() {
       await fetch(`${API}/notifications/single/${id}/read`, { method: "PATCH" });
       setNotifications(prev => prev.map(n => n._id === id ? { ...n, read: true } : n));
       setUnreadCount(prev => Math.max(0, prev - 1));
-    } catch {}
+    } catch { }
   };
 
   const timeAgo = (date: string) => {
@@ -103,9 +103,8 @@ export function NotificationCenter() {
               <div
                 key={notif._id}
                 onClick={() => !notif.read && markOneRead(notif._id)}
-                className={`flex items-start gap-3 px-3 py-3 border-b border-border/40 cursor-pointer hover:bg-muted/50 transition-colors ${
-                  !notif.read ? "bg-primary/5" : ""
-                }`}
+                className={`flex items-start gap-3 px-3 py-3 border-b border-border/40 cursor-pointer hover:bg-muted/50 transition-colors ${!notif.read ? "bg-primary/5" : ""
+                  }`}
               >
                 <div className="mt-0.5 shrink-0">
                   {typeIcon[notif.type] || typeIcon.general}

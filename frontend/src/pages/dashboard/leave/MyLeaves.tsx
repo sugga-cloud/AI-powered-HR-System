@@ -8,7 +8,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Calendar, Clock, CheckCircle2, XCircle, AlertCircle, Plus, Mic } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 
-const API = import.meta.env.VITE_MAIN_API_URL || "http://localhost:5000/api";
+const API = import.meta.env.VITE_MAIN_API_URL || "https://backend-1s6m.onrender.com/api";
 const EMPLOYEE_ID = "EMP001"; // TODO: replace with auth store value
 
 const statusColor: Record<string, string> = {

@@ -6,7 +6,7 @@ import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { CheckCircle2, XCircle, AlarmClock, Users, ClipboardList, Bot } from "lucide-react";
 
-const API = import.meta.env.VITE_MAIN_API_URL || "http://localhost:5000/api";
+const API = import.meta.env.VITE_MAIN_API_URL || "https://backend-1s6m.onrender.com/api";
 const HR_ID = "HR001"; // TODO: replace with auth store value
 
 const statusColor: Record<string, string> = {
@@ -108,11 +108,10 @@ export default function LeaveManagement() {
                     <div
                       key={leave._id}
                       onClick={() => { setSelectedLeave(leave); setComment(""); }}
-                      className={`p-4 rounded-lg border cursor-pointer transition-all ${
-                        selectedLeave?._id === leave._id
+                      className={`p-4 rounded-lg border cursor-pointer transition-all ${selectedLeave?._id === leave._id
                           ? "border-primary/50 bg-primary/5"
                           : "border-border/40 bg-muted/20 hover:bg-muted/40"
-                      }`}
+                        }`}
                     >
                       <div className="flex items-start justify-between gap-2">
                         <div>

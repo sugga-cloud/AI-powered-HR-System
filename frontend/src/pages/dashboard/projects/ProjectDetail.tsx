@@ -10,7 +10,7 @@ import {
   CheckCircle2, Clock, AlertTriangle, Circle, Bot, TrendingUp
 } from "lucide-react";
 
-const API = import.meta.env.VITE_MAIN_API_URL || "http://localhost:5000/api";
+const API = import.meta.env.VITE_MAIN_API_URL || "https://backend-1s6m.onrender.com/api";
 const EMPLOYEE_ID = "EMP001";
 
 const milestoneStatusIcons: Record<string, JSX.Element> = {
@@ -58,7 +58,7 @@ export default function ProjectDetail() {
       const res = await fetch(`${API}/projects/${id}`);
       const data = await res.json();
       setProject(data.data);
-    } catch {} finally { setLoading(false); }
+    } catch { } finally { setLoading(false); }
   };
 
   useEffect(() => { fetchProject(); }, [id]);
@@ -75,7 +75,7 @@ export default function ProjectDetail() {
       setShowMilestoneForm(false);
       setMilestoneForm({ title: "", description: "", deadline: "" });
       fetchProject();
-    } catch {} finally { setSubmitting(false); }
+    } catch { } finally { setSubmitting(false); }
   };
 
   const updateMilestoneStatus = async (milestoneId: string, status: string) => {
@@ -86,7 +86,7 @@ export default function ProjectDetail() {
         body: JSON.stringify({ status }),
       });
       fetchProject();
-    } catch {}
+    } catch { }
   };
 
   const submitFeedback = async () => {
@@ -101,7 +101,7 @@ export default function ProjectDetail() {
       setFeedbackText("");
       setShowFeedbackForm(false);
       fetchProject();
-    } catch {} finally { setSubmitting(false); }
+    } catch { } finally { setSubmitting(false); }
   };
 
   const addMember = async () => {
@@ -116,7 +116,7 @@ export default function ProjectDetail() {
       setMemberEmpId("");
       setShowMemberForm(false);
       fetchProject();
-    } catch {} finally { setSubmitting(false); }
+    } catch { } finally { setSubmitting(false); }
   };
 
   const fetchAISummary = async () => {

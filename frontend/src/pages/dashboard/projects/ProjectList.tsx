@@ -6,7 +6,7 @@ import { Button } from "@/components/ui/button";
 import { Plus, Briefcase, TrendingUp, Users, ChevronRight } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 
-const API = import.meta.env.VITE_MAIN_API_URL || "http://localhost:5000/api";
+const API = import.meta.env.VITE_MAIN_API_URL || "https://backend-1s6m.onrender.com/api";
 
 const statusColor: Record<string, string> = {
   Active: "bg-green-500/20 text-green-400 border-green-500/30",
@@ -42,7 +42,7 @@ export default function ProjectList() {
       const res = await fetch(`${API}/projects`);
       const data = await res.json();
       setProjects(data.data || []);
-    } catch {} finally { setLoading(false); }
+    } catch { } finally { setLoading(false); }
   };
 
   useEffect(() => { fetchProjects(); }, []);
@@ -59,7 +59,7 @@ export default function ProjectList() {
       setShowCreate(false);
       setForm({ name: "", description: "", priority: "Medium", endDate: "" });
       fetchProjects();
-    } catch {} finally { setCreating(false); }
+    } catch { } finally { setCreating(false); }
   };
 
   return (

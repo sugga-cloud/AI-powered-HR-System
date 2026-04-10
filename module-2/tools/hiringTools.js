@@ -1,7 +1,7 @@
 import axios from 'axios';
 import mongoose from 'mongoose';
 
-const HIRING_API_URL = 'http://localhost:5000/api/hiring';
+const HIRING_API_URL = 'https://backend-1s6m.onrender.com/api/hiring';
 const MODULE_1_URL = process.env.MODULE_1_URL || 'http://localhost:3000/api';
 
 export const generateJobDescription = async (role, requirements, experienceLevel) => {

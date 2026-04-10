@@ -66,15 +66,15 @@ Example (curl)
 
 Register:
 
-curl -X POST http://localhost:5000/api/auth/register -H "Content-Type: application/json" -d '{"name":"Alice","email":"alice@example.com","password":"pass123"}'
+curl -X POST https://backend-1s6m.onrender.com/api/auth/register -H "Content-Type: application/json" -d '{"name":"Alice","email":"alice@example.com","password":"pass123"}'
 
 Login:
 
-curl -X POST http://localhost:5000/api/auth/login -H "Content-Type: application/json" -d '{"email":"alice@example.com","password":"pass123"}'
+curl -X POST https://backend-1s6m.onrender.com/api/auth/login -H "Content-Type: application/json" -d '{"email":"alice@example.com","password":"pass123"}'
 
 Validate:
 
-curl -X GET http://localhost:5000/api/auth/validate -H "Authorization: Bearer <token>"
+curl -X GET https://backend-1s6m.onrender.com/api/auth/validate -H "Authorization: Bearer <token>"
 
 Security
 - Ensure `JWT_SECRET` is set in env and kept secret.
