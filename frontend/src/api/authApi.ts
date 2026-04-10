@@ -15,9 +15,9 @@ export const authApi = {
   },
 
   validateToken: async (): Promise<{ message: string; user: User }> => {
-    const response = await authClient.get("/auth/validate");
-    // Backend returns: { message, user }
-    return response.data;
+    const response = await authClient.get("/auth/me");
+    // Backend returns: { success: true, user }
+    return { message: "Success", user: response.data.user };
   },
 
   logout: () => {

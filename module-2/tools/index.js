@@ -6,6 +6,7 @@ import * as leaveTools from "./leaveTools.js";
 import * as shiftTools from "./shiftTools.js";
 import * as attendanceTools from "./attendanceTools.js";
 import * as metaTools from "./metaTools.js";
+import * as commTools from "./agentCommunicationTools.js";
 const tools = {
   ...employeeTools,
   ...departmentTools,
@@ -13,7 +14,8 @@ const tools = {
   ...leaveTools,
   ...shiftTools,
   ...attendanceTools,
-  ...metaTools
+  ...metaTools,
+  ...commTools
 };
 
 // helper assignment moved below the function declaration to avoid

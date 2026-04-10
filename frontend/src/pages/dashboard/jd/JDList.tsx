@@ -42,7 +42,7 @@ export default function JDList() {
       failed: { variant: "destructive" as const, label: "Failed" },
     };
     const config = variants[status];
-    return <Badge variant={config.variant}>{config.label}</Badge>;
+    return <Badge variant={config?.variant || "secondary"}>{config?.label}</Badge>;
   };
 
   const getApprovalBadge = (status: JobDescription['approvalStatus']) => {

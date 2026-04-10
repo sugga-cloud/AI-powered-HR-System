@@ -7,24 +7,23 @@ import {
 
 export const resumeApi = {
   shortlist: async (data: ShortlistRequest): Promise<void> => {
-    const response = await axiosClient.post("/rs/shortlist", data);
+    const response = await axiosClient.post("/hiring/shortlist", data);
     return response.data;
   },
 
   getAllCandidates: async (jdId?: string): Promise<Candidate[]> => {
-    const url = jdId ? `/rs/getAllCandidates/${jdId}` : "/rs/getAllCandidates/all";
+    const url = jdId ? `/hiring/getAllCandidates/${jdId}` : "/hiring/getAllCandidates/all";
     const response = await axiosClient.get(url);
-    return response.data.candidates || response.data;
+    return response.data.data;
   },
 
   getShortlistedCandidates: async (
     jdId?: string
   ): Promise<ShortlistedCandidate[]> => {
     const url = jdId
-      ? `/rs/getAllShortListedCandidates/${jdId}`
-      : "/rs/getAllShortListedCandidates";
+      ? `/hiring/getAllShortListedCandidates/${jdId}`
+      : "/hiring/getAllShortListedCandidates/all";
     const response = await axiosClient.get(url);
-    // Backend returns: { candidates: Array }
-    return response.data.candidates || response.data;
+    return response.data.data;
   },
 };

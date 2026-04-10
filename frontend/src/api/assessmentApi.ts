@@ -3,14 +3,12 @@ import { Assessment, AssessmentInit, CandidateScore, ShortlistedCandidate, Submi
 
 export const assessmentApi = {
   init: async (data: AssessmentInit): Promise<{ success: boolean; message: string; test_id: string; status: string }> => {
-    const response = await axiosClient.post('/ca/init', data);
-    // Backend returns: { success, message, test_id, status }
+    const response = await axiosClient.post('/hiring/assessments/init', data);
     return response.data;
   },
 
   getTest: async (candidate_id: string): Promise<{ success: boolean; test: Assessment }> => {
-    const response = await axiosClient.get('/ca/test', { params: { candidate_id } });
-    // Backend returns: { success, test }
+    const response = await axiosClient.get('/hiring/assessments/test', { params: { candidate_id } });
     return response.data;
   },
 
@@ -21,20 +19,17 @@ export const assessmentApi = {
   },
 
   submit: async (data: SubmitAssessmentRequest): Promise<{ success: boolean; message: string; score: CandidateScore }> => {
-    const response = await axiosClient.post('/ca/submit', data);
-    // Backend returns: { success, message, score }
+    const response = await axiosClient.post('/hiring/assessments/submit', data);
     return response.data;
   },
 
   getShortlisted: async (): Promise<{ success: boolean; total: number; shortlisted: ShortlistedCandidate[] }> => {
-    const response = await axiosClient.get('/ca/shortlisted');
-    // Backend returns: { success, total, shortlisted }
+    const response = await axiosClient.get('/hiring/assessments/shortlisted');
     return response.data;
   },
 
   getAssessmentDetails: async (candidateScoreId: string): Promise<{ success: boolean; shortlisted: ShortlistedCandidate }> => {
-    const response = await axiosClient.get(`/ca/shortlisted/${candidateScoreId}`);
-    // Backend returns: { success, shortlisted }
+    const response = await axiosClient.get(`/hiring/assessments/shortlisted/${candidateScoreId}`);
     return response.data;
   },
 };

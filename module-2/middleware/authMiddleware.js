@@ -1,4 +1,7 @@
-import axios from 'axios';
+import jwt from 'jsonwebtoken';
+import User from '../models/User.js';
+
+const JWT_SECRET = process.env.JWT_SECRET || 'aurion_secret_key_2026';
 
 export const authenticate = async (req, res, next) => {
     try {
@@ -8,23 +11,18 @@ export const authenticate = async (req, res, next) => {
             return res.status(401).json({ message: 'Authentication required' });
         }
 
-        // Call global auth service to validate token
-        const authServiceUrl = process.env.AUTH_SERVICE_URL || 'http://localhost:5000';
-        const response = await axios.get(`${authServiceUrl}/api/auth/validate`, {
-            headers: {
-                'Authorization': `Bearer ${token}`
-            }
-        });
+        const decoded = jwt.verify(token, JWT_SECRET);
+        const user = await User.findById(decoded.id).select('-password');
 
-        if (response.data && response.data.user) {
-            req.user = response.data.user;
-            req.token = token;
-            next();
-        } else {
-            return res.status(401).json({ message: 'Invalid token' });
+        if (!user) {
+            return res.status(401).json({ message: 'User not found' });
         }
+
+        req.user = user; // Entire user object with role and permissions
+        req.token = token;
+        next();
     } catch (error) {
-        console.error('Auth service error:', error.message);
+        console.error('Local Auth Error:', error.message);
         res.status(401).json({ message: 'Authentication failed' });
     }
 };
