@@ -6,6 +6,9 @@ import { componentTagger } from "lovable-tagger";
 // https://vitejs.dev/config/
 export default defineConfig(({ mode }) => ({
   server: {
+    allowedHosts: [
+      'aurion-ung6.onrender.com' // Add your Render host here
+    ],
     host: "::",
     port: 8080,
   },
