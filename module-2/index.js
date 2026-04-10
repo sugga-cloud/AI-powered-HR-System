@@ -11,7 +11,10 @@ const PORT = process.env.PORT || 3000;
 const httpServer = http.createServer(app);
 
 // Middleware
-app.use(cors());
+app.use(cors({
+  origin: "*",
+  credentials: true,
+}));
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
@@ -56,4 +59,4 @@ app.use((req, res) => {
 // Start Server
 httpServer.listen(PORT, () => {
   console.log(`🚀 Aurion HR Server running on port ${PORT}`);
-});
+});
