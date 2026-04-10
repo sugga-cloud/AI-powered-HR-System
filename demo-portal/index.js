@@ -10,7 +10,10 @@ const FormData = require('form-data');
 const path = require('path');
 const fs = require('fs');
 
-app.use(cors());
+app.use(cors({
+    origin: "*",
+    
+}));
 app.use(express.json());
 
 // Set up storage for uploaded resumes
