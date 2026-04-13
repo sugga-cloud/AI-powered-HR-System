@@ -8,12 +8,14 @@ const getModel = (name) => {
 };
 
 // ─── Brevo Configuration ─────────────────────────────────────────────────────
-const apiInstance = new Brevo.TransactionalEmailsApi();
+let brevoClient = null;
 if (process.env.BREVO_API_KEY) {
-  apiInstance.setApiKey(Brevo.TransactionalEmailsApiApiKeys.apiKey, process.env.BREVO_API_KEY);
+  brevoClient = new Brevo.BrevoClient({
+    apiKey: process.env.BREVO_API_KEY
+  });
 }
 const FROM_EMAIL = process.env.MAIL_FROM || "onboarding@brevo.com";
-const brevoEnabled = !!process.env.BREVO_API_KEY;
+const brevoEnabled = !!brevoClient;
 
 
 // ─── Internal helper: emit to socket ─────────────────────────────────────────
@@ -37,18 +39,19 @@ export const sendMail = async ({ to, subject, body, toEmployeeId = null, trigger
     // Check if we have credentials to send a real mail
     if (brevoEnabled) {
       try {
-        const sendSmtpEmail = new Brevo.SendSmtpEmail();
-        sendSmtpEmail.subject = subject;
-        sendSmtpEmail.sender = { "name": "Aurion AI", "email": FROM_EMAIL };
-        sendSmtpEmail.to = [{ "email": to }];
+        const sendOptions = {
+          subject: subject,
+          sender: { "name": "Aurion AI", "email": FROM_EMAIL },
+          to: [{ "email": to }],
+        };
         
         if (isHtml) {
-          sendSmtpEmail.htmlContent = body;
+          sendOptions.htmlContent = body;
         } else {
-          sendSmtpEmail.textContent = body;
+          sendOptions.textContent = body;
         }
 
-        const data = await apiInstance.sendTransacEmail(sendSmtpEmail);
+        const data = await brevoClient.transactionalEmails.sendTransacEmail(sendOptions);
         
         status = "sent";
         console.log(`📧 Real Mail sent via Brevo to ${to}: ${subject}`);
