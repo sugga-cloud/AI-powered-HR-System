@@ -1,5 +1,5 @@
 import mongoose from 'mongoose';
-import nodemailer from 'nodemailer';
+import { Resend } from 'resend';
 import dotenv from 'dotenv';
 dotenv.config();
 
@@ -7,19 +7,10 @@ const getModel = (name) => {
   try { return mongoose.model(name); } catch { return null; }
 };
 
-// ─── SMTP Configuration ──────────────────────────────────────────────────────
-const transporter = nodemailer.createTransport({
-  host: process.env.MAIL_HOST || "smtp.gmail.com",
-  port: parseInt(process.env.MAIL_PORT || "587"),
-  secure: process.env.MAIL_SECURE === 'true', 
-  auth: {
-    user: process.env.MAIL_USER,
-    pass: process.env.MAIL_PASS,
-  },
-  tls: {
-    rejectUnauthorized: false // Helps in local dev environments
-  }
-});
+// ─── Resend Configuration ────────────────────────────────────────────────────
+const resend = process.env.RESEND_API_KEY ? new Resend(process.env.RESEND_API_KEY) : null;
+const FROM_EMAIL = process.env.MAIL_FROM || "onboarding@resend.dev";
+
 
 // ─── Internal helper: emit to socket ─────────────────────────────────────────
 // This is populated by socket.js at runtime to allow tools to emit events
@@ -40,19 +31,23 @@ export const sendMail = async ({ to, subject, body, toEmployeeId = null, trigger
     let errorDetail = null;
 
     // Check if we have credentials to send a real mail
-    if (process.env.MAIL_USER && process.env.MAIL_PASS) {
+    if (resend) {
       try {
-        const mailOptions = {
-          from: `"Aurion AI HR" <${process.env.MAIL_USER}>`,
+        const { data, error } = await resend.emails.send({
+          from: FROM_EMAIL,
           to,
           subject,
           [isHtml ? 'html' : 'text']: body,
-        };
-        await transporter.sendMail(mailOptions);
+        });
+
+        if (error) {
+          throw new Error(error.message);
+        }
+
         status = "sent";
-        console.log(`📧 Real Mail sent to ${to}: ${subject}`);
+        console.log(`📧 Real Mail sent via Resend to ${to}: ${subject}`);
       } catch (err) {
-        console.error("❌ SMTP Send failed, falling back to simulation:", err.message);
+        console.error("❌ Resend Send failed, falling back to simulation:", err.message);
         status = "failed";
         errorDetail = err.message;
       }
