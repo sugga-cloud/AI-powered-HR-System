@@ -18,32 +18,34 @@ import { ErrorState } from "@/components/shared/ErrorState";
 import { offerApi } from "@/api/offerApi";
 import { toast } from "sonner";
 import { useNavigate } from "react-router-dom";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
+import { useState } from "react";
 
 export default function OfferList() {
   const navigate = useNavigate();
+  const [selectedOffer, setSelectedOffer] = useState<any>(null);
+  const [previewOpen, setPreviewOpen] = useState(false);
   
-  const { data: offers, isLoading, error, refetch } = useQuery({
+  const { data: response, isLoading, error, refetch } = useQuery({
     queryKey: ['offers'],
     queryFn: offerApi.list,
   });
 
-  const resendMutation = useMutation({
-    mutationFn: offerApi.resend,
-    onSuccess: () => {
-      toast.success("Offer letter resent successfully");
-    },
-    onError: () => {
-      toast.error("Failed to resend offer");
-    },
-  });
+  const offersArr = response?.offers || [];
+
+  const handlePreview = (offer: any) => {
+    setSelectedOffer(offer);
+    setPreviewOpen(true);
+  };
 
   const getStatusBadge = (status: string) => {
     const variants: Record<string, { className: string; label: string }> = {
       draft: { className: "bg-secondary text-secondary-foreground", label: "Draft" },
+      pending_approval: { className: "bg-warning text-warning-foreground", label: "Pending Approval" },
+      approved: { className: "bg-success text-success-foreground", label: "Approved" },
       sent: { className: "bg-info text-info-foreground", label: "Sent" },
       accepted: { className: "bg-success text-success-foreground", label: "Accepted" },
       rejected: { className: "bg-destructive text-destructive-foreground", label: "Rejected" },
-      expired: { className: "bg-muted text-muted-foreground", label: "Expired" },
     };
     const config = variants[status] || variants.draft;
     return <Badge className={config.className}>{config.label}</Badge>;
@@ -65,15 +67,11 @@ export default function OfferList() {
         }
       />
 
-      {!offers || offers.length === 0 ? (
+      {!offersArr || offersArr.length === 0 ? (
         <EmptyState
           icon={Gift}
           title="No offers created yet"
-          description="Create offer letters for selected candidates"
-          action={{
-            label: "Create Offer",
-            onClick: () => navigate('/dashboard/offer/create'),
-          }}
+          description="Create offer letters for selected candidates from the Interview or Assessment tabs"
         />
       ) : (
         <Card>
@@ -84,51 +82,36 @@ export default function OfferList() {
                   <TableHead>Candidate</TableHead>
                   <TableHead>Position</TableHead>
                   <TableHead>Salary</TableHead>
-                  <TableHead>Joining Date</TableHead>
                   <TableHead>Status</TableHead>
-                  <TableHead>Created</TableHead>
+                  <TableHead>Sent At</TableHead>
                   <TableHead className="text-right">Actions</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
-                {offers.map((offer) => (
-                  <TableRow key={offer.id}>
+                {offersArr.map((offer: any) => (
+                  <TableRow key={offer._id}>
                     <TableCell>
                       <div>
-                        <p className="font-medium">{offer.candidateName}</p>
-                        <p className="text-sm text-muted-foreground">{offer.candidateEmail}</p>
+                        <p className="font-medium">{offer.candidate_id?.name || "Candidate"}</p>
+                        <p className="text-sm text-muted-foreground">{offer.candidate_id?.email || "N/A"}</p>
                       </div>
                     </TableCell>
-                    <TableCell className="font-medium">{offer.jdTitle}</TableCell>
+                    <TableCell className="font-medium">{offer.job_id?.aiResponse?.jobTitle || "Developer"}</TableCell>
                     <TableCell>
                       <span className="font-medium">
-                        {offer.salary.currency} {offer.salary.amount.toLocaleString()}
+                        {offer.salary_offered?.currency || "INR"} {(offer.salary_offered?.amount || 0).toLocaleString()}
                       </span>
-                    </TableCell>
-                    <TableCell>
-                      {new Date(offer.joiningDate).toLocaleDateString()}
                     </TableCell>
                     <TableCell>{getStatusBadge(offer.status)}</TableCell>
                     <TableCell className="text-sm text-muted-foreground">
-                      {new Date(offer.createdAt).toLocaleDateString()}
+                      {offer.sent_at ? new Date(offer.sent_at).toLocaleDateString() : 'Not Sent'}
                     </TableCell>
                     <TableCell className="text-right">
                       <div className="flex justify-end gap-2">
-                        <Button variant="ghost" size="sm">
+                        <Button variant="ghost" size="sm" onClick={() => handlePreview(offer)}>
                           <Eye className="h-4 w-4 mr-2" />
-                          View
+                          View Letter
                         </Button>
-                        {offer.status === 'sent' && (
-                          <Button
-                            variant="ghost"
-                            size="sm"
-                            onClick={() => resendMutation.mutate(offer.id)}
-                            disabled={resendMutation.isPending}
-                          >
-                            <Send className="h-4 w-4 mr-2" />
-                            Resend
-                          </Button>
-                        )}
                       </div>
                     </TableCell>
                   </TableRow>
@@ -138,6 +121,24 @@ export default function OfferList() {
           </CardContent>
         </Card>
       )}
+
+      {/* Offer Preview Modal */}
+      <Dialog open={previewOpen} onOpenChange={setPreviewOpen}>
+        <DialogContent className="max-w-2xl max-h-[80vh] overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle>Offer Letter Preview</DialogTitle>
+            <DialogDescription>
+              Sent to {selectedOffer?.candidate_id?.name} for the {selectedOffer?.job_id?.aiResponse?.jobTitle} position.
+            </DialogDescription>
+          </DialogHeader>
+          <div className="mt-4 p-6 bg-muted rounded-md whitespace-pre-wrap font-serif text-sm leading-relaxed border">
+            {selectedOffer?.offer_letter_text}
+          </div>
+          <div className="flex justify-end mt-4">
+            <Button onClick={() => setPreviewOpen(false)}>Close</Button>
+          </div>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }

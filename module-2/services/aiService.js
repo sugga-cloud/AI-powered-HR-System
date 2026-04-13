@@ -84,13 +84,20 @@ export async function shortListedCandidatesForJD(candidates, job) {
           content: `
 You are an expert AI recruiter.
 Analyze candidates objectively based on their skills, experience, and suitability for the given job description.
+For every candidate, you MUST provide:
+1. A numerical score (0-100).
+2. A confidence score (0-1).
+3. A recommendation.
+4. A VALID AND DETAILED REASON explaining why the candidate was either SELECTED (shortlisted) or REJECTED. Mention specific skills or experience gaps.
+5. A status (shortlisted or rejected).
+
 Return output **strictly as VALID JSON ONLY** (no markdown, no explanations, no code fences, no extra text, no quotes like ',\`\`\`," at starting or ending of the response).
 The JSON must exactly match this format:
 {
   "score": 0-100,
   "confidence": 0-1,
   "recommendation": "Strong fit | Average fit | Weak fit | Not suitable",
-  "reasoning": "short explanation",
+  "reason": "Detailed explanation for selection or rejection",
   "status": "shortlisted | rejected"
 }`,
         },
@@ -130,7 +137,7 @@ Now respond strictly in JSON.`,
         aiEvaluation: {
           score: evaluation.score || 0,
           confidence: evaluation.confidence || 0,
-          reasoning: evaluation.reasoning || "No reasoning provided.",
+          reasoning: evaluation.reason || evaluation.reasoning || "No detailed reason provided.",
           recommendation: evaluation.recommendation || "Unknown",
           evaluatedAt: new Date(),
         },
@@ -225,7 +232,7 @@ export async function getCandidateDetailsFromResume(jdId, resumeUrl, buffer) {
 export async function generateAssessmentQuestions(role, skills) {
   try {
     console.log(`🧠 Generating AI questions for ${role}...`);
-    const prompt = `Generate 5 multiple-choice questions for a candidate applying for the role of ${role}.
+    const prompt = `Generate 3 multiple-choice questions for a candidate applying for the role of ${role}.
 Focus on these skills: ${skills.join(", ")}.
 Return output strictly as a VALID JSON array of objects:
 [

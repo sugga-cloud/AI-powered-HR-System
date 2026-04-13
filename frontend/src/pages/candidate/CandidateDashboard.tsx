@@ -6,9 +6,18 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { useNavigate } from "react-router-dom";
+import { assessmentApi } from "@/api/assessmentApi";
 
 export default function CandidateDashboard() {
   const navigate = useNavigate();
+
+  const { data: myData, isLoading } = useQuery({
+    queryKey: ['myTests'],
+    queryFn: assessmentApi.getMyTests
+  });
+
+  const tests = myData?.tests || [];
+  const pendingTests = tests.filter(t => t.test_status === 'pending');
 
   return (
     <div>
@@ -20,19 +29,19 @@ export default function CandidateDashboard() {
       <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-4 mb-6">
         <CardStats
           title="Tests Assigned"
-          value="2"
+          value={tests.length}
           icon={ClipboardList}
-          description="1 pending"
+          description={`${pendingTests.length} pending`}
         />
         <CardStats
           title="Upcoming Interviews"
-          value="1"
+          value="0"
           icon={Calendar}
           description="This week"
         />
         <CardStats
           title="Offers"
-          value="1"
+          value="0"
           icon={Gift}
           description="Pending response"
         />
@@ -51,21 +60,29 @@ export default function CandidateDashboard() {
           </CardHeader>
           <CardContent>
             <div className="space-y-4">
-              <div className="flex items-center justify-between p-4 rounded-lg bg-muted/50">
-                <div className="flex-1">
-                  <div className="flex items-center gap-2 mb-1">
-                    <p className="font-medium">Technical Assessment</p>
-                    <Badge className="bg-warning text-warning-foreground">Pending</Badge>
+              {isLoading ? (
+                <p className="text-sm text-muted-foreground p-4">Loading your assessments...</p>
+              ) : pendingTests.length === 0 ? (
+                <p className="text-sm text-muted-foreground p-4">No pending actions right now.</p>
+              ) : (
+                pendingTests.map(test => (
+                  <div key={test._id} className="flex items-center justify-between p-4 rounded-lg bg-muted/50 border border-border/50">
+                    <div className="flex-1">
+                      <div className="flex items-center gap-2 mb-1">
+                        <p className="font-medium text-sm">Technical Assessment</p>
+                        <Badge className="bg-warning text-warning-foreground text-xs">Pending</Badge>
+                      </div>
+                      <p className="text-sm text-muted-foreground">
+                        Complete your technical test for the role
+                      </p>
+                      <p className="text-xs text-info mt-1">Due: As soon as possible</p>
+                    </div>
+                    <Button size="sm" onClick={() => navigate(`/candidate/tests/${test._id}`)}>
+                      Start Test
+                    </Button>
                   </div>
-                  <p className="text-sm text-muted-foreground">
-                    Complete your technical assessment for Senior Developer role
-                  </p>
-                  <p className="text-xs text-muted-foreground mt-1">Due: Tomorrow</p>
-                </div>
-                <Button size="sm" onClick={() => navigate('/candidate/tests')}>
-                  Start Test
-                </Button>
-              </div>
+                ))
+              )}
 
               <div className="flex items-center justify-between p-4 rounded-lg bg-muted/50">
                 <div className="flex-1">

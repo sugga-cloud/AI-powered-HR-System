@@ -10,12 +10,15 @@ const getModel = (name) => {
 // ─── SMTP Configuration ──────────────────────────────────────────────────────
 const transporter = nodemailer.createTransport({
   host: process.env.MAIL_HOST || "smtp.gmail.com",
-  port: process.env.MAIL_PORT || 587,
-  secure: process.env.MAIL_SECURE === 'true', // true for 465, false for other ports
+  port: parseInt(process.env.MAIL_PORT || "587"),
+  secure: process.env.MAIL_SECURE === 'true', 
   auth: {
     user: process.env.MAIL_USER,
     pass: process.env.MAIL_PASS,
   },
+  tls: {
+    rejectUnauthorized: false // Helps in local dev environments
+  }
 });
 
 // ─── Internal helper: emit to socket ─────────────────────────────────────────
@@ -120,6 +123,12 @@ export const getMailsByModule = async (relatedModule, limit = 20) => {
 // ─── 4. Compose & Send Onboarding Welcome Mail ────────────────────────────────
 export const sendOnboardingWelcomeMail = async (employeeId, employeeName, role, startDate) => {
   const subject = `Welcome to the Team, ${employeeName}! 🎉`;
+  
+  // Sanitize name for email handle (remove non-alphanumeric characters except dots)
+  const sanitizedHandle = employeeName.toLowerCase()
+    .replace(/[^a-z0-9\s]/g, '') // Remove symbols like / ' ! etc
+    .replace(/\s+/g, ".");
+
   const body = `Dear ${employeeName},
 
 We are thrilled to welcome you as our new ${role}!
@@ -136,7 +145,7 @@ Warm regards,
 Aurion AI HR System`;
 
   return await sendMail({
-    to: `${employeeName.toLowerCase().replace(/\s+/g, ".")}@company.com`,
+    to: `${sanitizedHandle}@company.com`,
     subject, body, toEmployeeId: employeeId,
     triggeredBy: "agent", relatedModule: "onboarding"
   });

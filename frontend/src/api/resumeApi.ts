@@ -26,4 +26,9 @@ export const resumeApi = {
     const response = await axiosClient.get(url);
     return response.data.data;
   },
+
+  getStatus: async (jobId: string): Promise<{ progress: number; message: string; status: string }> => {
+    const response = await axiosClient.get(`/hiring/status/${jobId}`);
+    return response.data;
+  },
 };

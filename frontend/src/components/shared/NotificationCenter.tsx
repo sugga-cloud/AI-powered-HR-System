@@ -9,8 +9,8 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
+import axiosClient from "@/api/axiosClient";
 
-const API = import.meta.env.VITE_MAIN_API_URL || "https://backend-1s6m.onrender.com/api";
 const EMPLOYEE_ID = "EMP001"; // TODO: replace with auth store
 
 const typeIcon: Record<string, JSX.Element> = {
@@ -31,11 +31,12 @@ export function NotificationCenter() {
 
   const fetchNotifications = useCallback(async () => {
     try {
-      const res = await fetch(`${API}/notifications/${EMPLOYEE_ID}?limit=20`);
-      const data = await res.json();
+      const { data } = await axiosClient.get(`/notifications/${EMPLOYEE_ID}?limit=20`);
       setNotifications(data.data || []);
       setUnreadCount(data.unreadCount || 0);
-    } catch { }
+    } catch (err) {
+      console.error("Failed to fetch notifications:", err);
+    }
   }, []);
 
   useEffect(() => {
@@ -47,18 +48,22 @@ export function NotificationCenter() {
 
   const markAllRead = async () => {
     try {
-      await fetch(`${API}/notifications/${EMPLOYEE_ID}/read-all`, { method: "PATCH" });
+      await axiosClient.patch(`/notifications/${EMPLOYEE_ID}/read-all`);
       setUnreadCount(0);
       setNotifications(prev => prev.map(n => ({ ...n, read: true })));
-    } catch { }
+    } catch (err) {
+      console.error("Failed to mark all read:", err);
+    }
   };
 
   const markOneRead = async (id: string) => {
     try {
-      await fetch(`${API}/notifications/single/${id}/read`, { method: "PATCH" });
+      await axiosClient.patch(`/notifications/single/${id}/read`);
       setNotifications(prev => prev.map(n => n._id === id ? { ...n, read: true } : n));
       setUnreadCount(prev => Math.max(0, prev - 1));
-    } catch { }
+    } catch (err) {
+      console.error("Failed to mark one read:", err);
+    }
   };
 
   const timeAgo = (date: string) => {

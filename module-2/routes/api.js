@@ -33,6 +33,6 @@ router.use('/projects', authenticate, projectRouter);
 router.use('/analytics', authenticate, requireRole('hr', 'admin'), analyticsRouter);
 router.use('/mail', authenticate, requireRole('hr', 'admin'), mailRouter);
 router.use('/notifications', authenticate, notificationRouter);
-router.use('/hiring', authenticate, requireRole('hr', 'admin'), hiringRouter);
+router.use('/hiring', hiringRouter);
 
 export default router;

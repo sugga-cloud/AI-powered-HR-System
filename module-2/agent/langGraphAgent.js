@@ -10,6 +10,7 @@ import * as mailToolsObj from "../tools/mailTools.js";
 import * as analyticsToolsObj from "../tools/analyticsTools.js";
 import * as onboardingToolsObj from "../tools/onboardingTools.js";
 import * as commToolsObj from "../tools/agentCommunicationTools.js";
+import * as assessmentToolsObj from "../tools/assessmentTools.js";
 import { HumanMessage, AIMessage, SystemMessage } from "@langchain/core/messages";
 
 // ═══════════════════════════════════════════════════════════════════════════════
@@ -205,12 +206,19 @@ const shortlistCandidatesTool = tool(
 );
 
 const scheduleInterviewsTool = tool(
-  async ({ candidateIds, dateStr }) =>
-    JSON.stringify(await hiringToolsObj.scheduleInterviews(candidateIds, dateStr)),
+  async ({ candidateId, jobId, dateStr, round, mode, interviewerIds }) =>
+    JSON.stringify(await hiringToolsObj.scheduleInterviews(candidateId, jobId, dateStr, round, mode, interviewerIds)),
   {
     name: "scheduleInterviews",
-    description: "Schedule interviews for a list of candidates.",
-    schema: z.object({ candidateIds: z.array(z.string()), dateStr: z.string() }),
+    description: "Schedule an interview for a candidate, assigning one or more interviewer IDs.",
+    schema: z.object({ 
+      candidateId: z.string(), 
+      jobId: z.string(), 
+      dateStr: z.string(), 
+      round: z.enum(["technical", "hr", "managerial", "final"]).optional(), 
+      mode: z.enum(["online", "onsite"]).optional(), 
+      interviewerIds: z.array(z.string()).optional() 
+    }),
   }
 );
 
@@ -237,8 +245,39 @@ const getShortlistedCandidatesTool = tool(
   async ({ jobId }) => JSON.stringify(await hiringToolsObj.getShortlistedCandidates(jobId)),
   {
     name: "getShortlistedCandidates",
-    description: "Get the AI-shortlisted candidates for a specific job (or all shortlisted candidates if jobId is null).",
+    description: "Get the AI-shortlisted candidates for a specific job.",
     schema: z.object({ jobId: z.string().optional().nullable() }),
+  }
+);
+
+const finalizeCandidateDecisionTool = tool(
+  async ({ candidateId, jobId, decision, baseSalary, positionTitle }) => JSON.stringify(await hiringToolsObj.finalizeCandidateDecision(candidateId, jobId, decision, baseSalary, positionTitle)),
+  {
+    name: "finalizeCandidateDecision",
+    description: "Finalize a candidate's pipeline status by sending either a customized Offer Letter ('hire') or a polite Rejection Email ('reject'). For 'hire', provide baseSalary and positionTitle. For 'reject', they are ignored.",
+    schema: z.object({ 
+      candidateId: z.string(), 
+      jobId: z.string(), 
+      decision: z.enum(["hire", "reject"]),
+      baseSalary: z.number().optional(),
+      positionTitle: z.string().optional()
+    }),
+  }
+);
+
+const submitInterviewFeedbackTool = tool(
+  async ({ interviewId, interviewerId, comments, rating, recommendation }) => 
+    JSON.stringify(await hiringToolsObj.submitInterviewFeedback(interviewId, interviewerId, comments, rating, recommendation)),
+  {
+    name: "submitInterviewFeedback",
+    description: "Record feedback, score (1-5), and recommendation for a completed interview.",
+    schema: z.object({
+      interviewId: z.string(),
+      interviewerId: z.string(),
+      comments: z.string(),
+      rating: z.number().min(1).max(5),
+      recommendation: z.enum(["strong_yes", "yes", "neutral", "no", "strong_no"])
+    })
   }
 );
 
@@ -419,6 +458,15 @@ const sendMailTool = tool(
   }
 );
 
+const getMailLogTool = tool(
+  async ({ employeeId }) => JSON.stringify(await mailToolsObj.getMailLog(employeeId)),
+  {
+    name: "getMailLog",
+    description: "Retrieve a log of sent emails for a specific employee to check status or delivery errors.",
+    schema: z.object({ employeeId: z.string() }),
+  }
+);
+
 // ─── Analytics Tools ──────────────────────────────────────────────────────────
 const getHiringFunnelTool = tool(
   async () => JSON.stringify(await analyticsToolsObj.getHiringFunnel()),
@@ -485,6 +533,41 @@ const getOnboardingProgressTool = tool(
   }
 );
 
+// ─── Assessment Tools ─────────────────────────────────────────────────────────
+const initAssessmentTool = tool(
+  async ({ candidateId, jobId, role, skills, testType }) =>
+    JSON.stringify(await assessmentToolsObj.initAssessment(candidateId, jobId, role, skills, testType)),
+  {
+    name: "initializeAssessment",
+    description: "Start an AI assessment/test for a candidate. Generates questions automatically.",
+    schema: z.object({
+      candidateId: z.string(),
+      jobId: z.string(),
+      role: z.string(),
+      skills: z.array(z.string()).optional(),
+      testType: z.enum(["MCQ", "Technical", "Psychometric"]).optional()
+    }),
+  }
+);
+
+const getAssessmentResultsTool = tool(
+  async ({ jobId }) => JSON.stringify(await assessmentToolsObj.getAssessmentResults(jobId)),
+  {
+    name: "getAssessmentResults",
+    description: "Fetch all candidate test scores and percentages (can filter by jobId).",
+    schema: z.object({ jobId: z.string().optional() }),
+  }
+);
+
+const getTestDetailTool = tool(
+  async ({ testId }) => JSON.stringify(await assessmentToolsObj.getTestDetail(testId)),
+  {
+    name: "getTestDetail",
+    description: "View full details of a specific candidate test including questions and answers.",
+    schema: z.object({ testId: z.string() }),
+  }
+);
+
 // ═══════════════════════════════════════════════════════════════════════════════
 //  TOOL REGISTRY
 // ═══════════════════════════════════════════════════════════════════════════════
@@ -496,7 +579,7 @@ const allTools = [
   generateGraphDataTool,
   // Hiring
   generateJDTool, shortlistCandidatesTool, scheduleInterviewsTool, postToPlatformTool,
-  getCandidatesTool, getShortlistedCandidatesTool,
+  getCandidatesTool, getShortlistedCandidatesTool, finalizeCandidateDecisionTool, submitInterviewFeedbackTool,
   // Leave
   requestLeaveTool, getLeaveStatusTool, hrRespondToLeaveIntentTool,
   getPendingLeavesTool, getLeaveBalanceTool,
@@ -504,12 +587,14 @@ const allTools = [
   createProjectTool, addMemberTool, addMilestoneTool,
   submitFeedbackTool, getProjectStatusTool, getProjectHealthSummaryTool,
   // Mail
-  sendMailTool,
+  sendMailTool, getMailLogTool,
   // Analytics
   getHiringFunnelTool, getLeaveHeatmapTool, getProjectHealthReportTool,
   getHeadcountTool, getHRKPIsTool,
   // Onboarding
   createOnboardingPlanTool, getOnboardingProgressTool,
+  // Assessments
+  initAssessmentTool, getAssessmentResultsTool, getTestDetailTool,
   // Project Updates & Communication
   submitProjectUpdateTool, informHRTool, getHRAgentUpdatesTool
 ];

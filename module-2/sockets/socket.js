@@ -27,7 +27,7 @@ export const initSocket = (httpServer) => {
 
     // ─── Join role-based rooms ──────────────────────────────────────────────
     // The client sends identity on connection via auth or first event
-    socket.on("identify", async ({ employeeId, employeeRole, contextModule }) => {
+    socket.on("identify", async ({ employeeId, employeeRole, contextModule, skipWelcome }) => {
       const session = sessionBuffers.get(socket.id);
       if (!session) return;
 
@@ -43,24 +43,28 @@ export const initSocket = (httpServer) => {
         socket.join("hr_room");
       }
 
-      console.log(`👤 ${employeeRole.toUpperCase()} ${employeeId} joined rooms [emp_${employeeId}${employeeRole !== 'employee' ? ', hr_room' : ''}]`);
+      console.log(`👤 ${employeeRole.toUpperCase()} ${employeeId} identified [skipWelcome: ${!!skipWelcome}]`);
 
-      // Emit welcome after identification
-      try {
-        socket.emit("status", { message: "Aurion is initializing..." });
+      // Emit welcome only if not skipped
+      if (!skipWelcome) {
+        try {
+          socket.emit("status", { message: "Aurion is preparing..." });
 
-        const welcomeReply = await runAgent({
-          userInput: "INIT_WELCOME_FLOW",
-          sessionId: socket.id,
-          employeeId,
-          employeeRole,
-          contextModule
-        });
+          const welcomeReply = await runAgent({
+            userInput: "GREETING_SHORT: Good morning/afternoon. Briefly ask how you can help.",
+            sessionId: socket.id,
+            employeeId,
+            employeeRole,
+            contextModule
+          });
 
-        socket.emit("agent-response", { reply: welcomeReply });
-      } catch (error) {
-        console.error("Welcome Error:", error);
-        socket.emit("agent-response", { reply: "Hello! I'm Aurion, your HR assistant. How can I help you today?" });
+          socket.emit("agent-response", { reply: welcomeReply });
+        } catch (error) {
+          console.error("Welcome Error:", error);
+          socket.emit("agent-response", { reply: "Good morning! How can I assist you today?" });
+        }
+      } else {
+        socket.emit("status", { message: "Aurion is ready" });
       }
     });
 

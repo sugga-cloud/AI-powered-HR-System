@@ -17,7 +17,7 @@ import JDPost from "./pages/dashboard/jd/JDPost";
 import CandidateList from "./pages/dashboard/resume/CandidateList";
 import AssessmentList from "./pages/dashboard/assessment/AssessmentList";
 import AssessmentDetail from "./pages/dashboard/assessment/AssessmentDetail";
-import InterviewList from "./pages/dashboard/interview/InterviewList";
+// import InterviewList from "./pages/dashboard/interview/InterviewList";
 import OfferList from "./pages/dashboard/offer/OfferList";
 import CandidateDashboard from "./pages/candidate/CandidateDashboard";
 import TestScreen from "./pages/candidate/TestScreen";
@@ -32,23 +32,27 @@ import LeaveManagement from "./pages/dashboard/leave/LeaveManagement";
 import AnalyticsDashboard from "./pages/dashboard/analytics/AnalyticsDashboard";
 import ProjectList from "./pages/dashboard/projects/ProjectList";
 import ProjectDetail from "./pages/dashboard/projects/ProjectDetail";
+import MailLog from "./pages/dashboard/mail/MailLog";
+
+import { useInitializeAuth } from "./hooks/useInitializeAuth";
+
+import CandidateLogin from "./pages/auth/CandidateLogin";
 
 const queryClient = new QueryClient();
 
-const App = () => (
-  <Provider store={store}>
-    <QueryClientProvider client={queryClient}>
-      <TooltipProvider>
-        <Toaster />
-        <Sonner />
-        <BrowserRouter>
-          <Routes>
-            <Route path="/" element={<Navigate to="/dashboard" replace />} />
-            <Route path="/apply/:jdId" element={<ApplyJobPage />} />
-            <Route path="/auth" element={<AuthLayout />}>
-              <Route path="login" element={<Login />} />
-              <Route path="register" element={<Register />} />
-            </Route>
+const AppContent = () => {
+  useInitializeAuth();
+  
+  return (
+    <BrowserRouter>
+      <Routes>
+        <Route path="/" element={<Navigate to="/dashboard" replace />} />
+        <Route path="/apply/:jdId" element={<ApplyJobPage />} />
+        <Route path="/auth" element={<AuthLayout />}>
+          <Route path="login" element={<Login />} />
+          <Route path="candidate" element={<CandidateLogin />} />
+          <Route path="register" element={<Register />} />
+        </Route>
 
             <Route
               path="/dashboard"
@@ -71,10 +75,11 @@ const App = () => (
                 <Route path="resume" element={<CandidateList />} />
                 <Route path="assessment" element={<AssessmentList />} />
                 <Route path="assessment/:id" element={<AssessmentDetail />} />
-                <Route path="interview" element={<InterviewList />} />
+                {/* <Route path="interview" element={<InterviewList />} /> */}
                 <Route path="offer" element={<OfferList />} />
                 <Route path="leave" element={<LeaveManagement />} />
                 <Route path="analytics" element={<AnalyticsDashboard />} />
+                <Route path="mail-log" element={<MailLog />} />
               </Route>
 
               {/* General Workforce (All authenticated users) */}
@@ -100,8 +105,18 @@ const App = () => (
             </Route>
 
             <Route path="*" element={<NotFound />} />
-          </Routes>
-        </BrowserRouter>
+      </Routes>
+    </BrowserRouter>
+  );
+};
+
+const App = () => (
+  <Provider store={store}>
+    <QueryClientProvider client={queryClient}>
+      <TooltipProvider>
+        <Toaster />
+        <Sonner />
+        <AppContent />
       </TooltipProvider>
     </QueryClientProvider>
   </Provider>

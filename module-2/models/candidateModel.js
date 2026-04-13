@@ -3,7 +3,7 @@ import mongoose from  'mongoose';
 const Schema = new mongoose.Schema(
     {
         name: { type: String, required: true },
-        email: { type: String, required: true, unique: true },
+        email: { type: String, required: true },
         phone: { type: String },
         resume: { type: String }, // Storing URL of the resume
         skills: { type: [String] },
@@ -51,5 +51,9 @@ const Schema = new mongoose.Schema(
     },
     { timestamps: true }
 );
+
+// Allow a candidate to apply to multiple different jobs, 
+// but prevent duplicate applications for the exact same job profile.
+Schema.index({ email: 1, job_id: 1 }, { unique: true });
 
 export default mongoose.model("Candidate",Schema);

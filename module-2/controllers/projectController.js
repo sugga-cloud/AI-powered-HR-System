@@ -23,7 +23,8 @@ export const getAllProjects = async (req, res) => {
     if (status) filter.status = status;
     if (priority) filter.priority = priority;
     const projects = await Project.find(filter)
-      .populate("projectLeadId", "name email")
+      .populate("projectLeadId", "firstName lastName email")
+      .populate("members.employeeId", "firstName lastName email")
       .sort({ createdAt: -1 }).lean();
     res.json({ count: projects.length, data: projects });
   } catch (e) { res.status(500).json({ message: e.message }); }
@@ -86,7 +87,26 @@ export const getHealthSummary = async (req, res) => {
   } catch (e) { res.status(500).json({ message: e.message }); }
 };
 
-// GET /api/projects/employee/:employeeId
+// PATCH /api/projects/:id
+export const updateProject = async (req, res) => {
+  try {
+    const Project = getModel("Project");
+    const project = await Project.findByIdAndUpdate(req.params.id, req.body, { new: true });
+    if (!project) return res.status(404).json({ message: "Project not found." });
+    res.json({ success: true, data: project });
+  } catch (e) { res.status(500).json({ message: e.message }); }
+};
+
+// DELETE /api/projects/:id
+export const deleteProject = async (req, res) => {
+  try {
+    const Project = getModel("Project");
+    const project = await Project.findByIdAndDelete(req.params.id);
+    if (!project) return res.status(404).json({ message: "Project not found." });
+    res.json({ success: true, message: "Project deleted successfully." });
+  } catch (e) { res.status(500).json({ message: e.message }); }
+};
+
 export const getEmployeeProjects = async (req, res) => {
   try {
     const result = await projectToolsObj.getProjectsForEmployee(req.params.employeeId);

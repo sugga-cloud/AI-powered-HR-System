@@ -24,12 +24,37 @@ if (!fs.existsSync('uploads')) {
     fs.mkdirSync('uploads');
 }
 
-// In-memory mock database for Demo Portal
-const jobs = [];
-const applications = [];
+// Persistence Layer for Demo Portal
+const DB_FILE = path.join(__dirname, 'db.json');
+
+const loadData = () => {
+    if (fs.existsSync(DB_FILE)) {
+        try {
+            const data = fs.readFileSync(DB_FILE, 'utf8');
+            const parsed = JSON.parse(data);
+            return {
+                jobs: parsed.jobs || [],
+                applications: parsed.applications || []
+            };
+        } catch (e) {
+            console.error("[Demo Portal] Error loading db.json, starting fresh.");
+            return { jobs: [], applications: [] };
+        }
+    }
+    return { jobs: [], applications: [] };
+};
+
+const saveData = () => {
+    const data = JSON.stringify({ jobs, applications }, null, 2);
+    fs.writeFileSync(DB_FILE, data);
+};
+
+const database = loadData();
+const jobs = database.jobs;
+const applications = database.applications;
 
 const REQUIRED_API_KEY = "sk_demo_portal_12345";
-const AURION_API_URL = process.env.AURION_API_URL || "https://backend-1s6m.onrender.com/api/hiring";
+const AURION_API_URL = "http://localhost:5000/api/hiring";
 
 // Middleware to check API key
 const checkApiKey = (req, res, next) => {
@@ -47,6 +72,7 @@ app.post('/api/external/jobs', checkApiKey, (req, res) => {
     job.id = job.job_id || Date.now().toString();
     job.postedAt = new Date();
     jobs.push(job);
+    saveData(); // Persist to disk
     console.log(`[Demo Portal] New Job Received: ${job.role || job.title}`);
     res.status(201).json({ success: true, message: "Job successfully posted to Demo Portal", job });
 });

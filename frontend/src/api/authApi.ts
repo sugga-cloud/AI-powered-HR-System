@@ -20,6 +20,11 @@ export const authApi = {
     return { message: "Success", user: response.data.user };
   },
 
+  getEmployees: async (): Promise<{ success: boolean; users: User[] }> => {
+    const response = await authClient.get("/auth/employees");
+    return response.data;
+  },
+
   logout: () => {
     localStorage.removeItem("token");
   },

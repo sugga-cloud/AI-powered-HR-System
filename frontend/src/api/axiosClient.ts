@@ -1,5 +1,8 @@
 import axios from 'axios';
 
+console.log('VITE_MAIN_API_URL:', import.meta.env.VITE_MAIN_API_URL);
+console.log('VITE_AUTH_API_URL:', import.meta.env.VITE_AUTH_API_URL);
+
 const axiosClient = axios.create({
   baseURL: import.meta.env.VITE_MAIN_API_URL || 'https://backend-1s6m.onrender.com/api',
   headers: {

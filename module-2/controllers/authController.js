@@ -54,3 +54,13 @@ export const getMe = async (req, res) => {
     res.status(500).json({ message: error.message });
   }
 };
+
+export const getAllEmployees = async (req, res) => {
+  try {
+    // Return everyone except external candidates
+    const users = await User.find({ role: { $in: ['employee', 'manager', 'admin', 'hr'] } }).select('-password');
+    res.status(200).json({ success: true, users });
+  } catch (error) {
+    res.status(500).json({ message: error.message });
+  }
+};

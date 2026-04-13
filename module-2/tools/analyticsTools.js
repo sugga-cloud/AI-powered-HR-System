@@ -13,13 +13,12 @@ export const getHiringFunnel = async () => {
     const JobDescription = getModel("JobDescription");
 
     const totalJDs = JobDescription ? await JobDescription.countDocuments() : 0;
-    const totalApplied = CandidateApplied ? await CandidateApplied.countDocuments() : 0;
+    const totalCandidates = Candidate ? await Candidate.countDocuments() : 0;
     
-    // Attempt aggregation for stage breakdown
     let stageData = [];
-    if (CandidateApplied) {
+    if (Candidate) {
       try {
-        stageData = await CandidateApplied.aggregate([
+        stageData = await Candidate.aggregate([
           { $group: { _id: "$status", count: { $sum: 1 } } }
         ]);
       } catch {}
@@ -28,12 +27,12 @@ export const getHiringFunnel = async () => {
     const stageMap = stageData.reduce((acc, s) => { acc[s._id] = s.count; return acc; }, {});
 
     const funnel = [
-      { name: "JDs Posted", count: totalJDs },
-      { name: "Applications", count: totalApplied },
-      { name: "Shortlisted", count: stageMap["Shortlisted"] || stageMap["shortlisted"] || 0 },
-      { name: "Interviewed", count: stageMap["Interviewed"] || stageMap["interviewed"] || 0 },
-      { name: "Offered", count: stageMap["Offered"] || stageMap["offered"] || 0 },
-      { name: "Hired", count: stageMap["Hired"] || stageMap["hired"] || 0 },
+      { name: "Total Jobs", count: totalJDs, color: "bg-blue-500" },
+      { name: "New Apps", count: stageMap["new"] || 0, color: "bg-slate-500" },
+      { name: "Screening", count: stageMap["screening"] || 0, color: "bg-indigo-500" },
+      { name: "Assessment", count: stageMap["assessment"] || stageMap["shortlisted"] || 0, color: "bg-purple-500" },
+      { name: "Interview", count: stageMap["interview"] || 0, color: "bg-amber-500" },
+      { name: "Hired", count: stageMap["hired"] || stageMap["offer"] || 0, color: "bg-green-500" },
     ];
 
     return { status: "success", data: funnel };

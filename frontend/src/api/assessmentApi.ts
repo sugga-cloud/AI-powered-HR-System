@@ -12,9 +12,13 @@ export const assessmentApi = {
     return response.data;
   },
 
+  getMyTests: async (): Promise<{ success: boolean; count: number; tests: Assessment[] }> => {
+    const response = await axiosClient.get('/hiring/assessments/my-tests');
+    return response.data;
+  },
+
   getTestByTestId: async (test_id: string): Promise<{ success: boolean; test: Assessment }> => {
-    const response = await axiosClient.get(`/ca/test/${test_id}`);
-    // Backend returns: { success, test }
+    const response = await axiosClient.get(`/hiring/assessments/test/${test_id}`);
     return response.data;
   },
 

@@ -57,3 +57,12 @@ export const speak = (text, options = {}) => {
     synth.speak(utterance);
   }, 300);
 };
+
+/**
+ * Stop any current speech (Barge-in)
+ */
+export const stopSpeaking = () => {
+  if (window.speechSynthesis) {
+    window.speechSynthesis.cancel();
+  }
+};

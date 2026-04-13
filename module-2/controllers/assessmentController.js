@@ -3,7 +3,9 @@ import CandidateScore from "../models/Candidate Assessment Models/CandidateScore
 import ShortlistedCandidate from "../models/Resume Screening Models/ShortlistedCandidatesModel.js";
 import Candidate from "../models/candidateModel.js";
 import JD from "../models/jdModel.js";
+import User from "../models/User.js";
 import { generateAssessmentQuestions } from "../services/aiService.js";
+import { sendMail } from "../tools/mailTools.js";
 
 export const initAssessment = async (req, res) => {
   try {
@@ -21,6 +23,35 @@ export const initAssessment = async (req, res) => {
       total_marks: totalMarks,
       questions: questions,
     });
+
+    // Update candidate global status and send email
+    const fullCandidate = await Candidate.findByIdAndUpdate(candidate_id, { status: "assessment" });
+    
+    if (fullCandidate && fullCandidate.email) {
+      const job = await JD.findById(job_id);
+      const jobTitle = job?.aiResponse?.jobTitle || role || "the position";
+      
+      const tempPassword = Math.random().toString(36).slice(-8); // Generate random temp password
+      
+      // Upsert User record for Candidate Portal
+      let userRecord = await User.findOne({ email: fullCandidate.email });
+      if (userRecord) {
+        userRecord.password = tempPassword;
+        await userRecord.save();
+      } else {
+        await User.create({ email: fullCandidate.email, name: fullCandidate.name, password: tempPassword, role: "candidate" });
+      }
+
+      await sendMail({
+        to: fullCandidate.email,
+        subject: `Next Steps: Technical Assessment for ${jobTitle}`,
+        body: `Hello ${fullCandidate.name},\n\nCongratulations! Your profile has been shortlisted for the ${jobTitle} position.\n\nAs the next step, we have initialized a technical assessment for you.\n\nPlease log in to the Candidate Portal to begin your test:\n🔗 Portal Link: http://localhost:5173/auth/candidate\n👤 Login ID: ${fullCandidate.email}\n🔑 Password: ${tempPassword}\n\nBest of luck!\n\nHR Team | Aurion AI`,
+        relatedModule: "hiring",
+        refModel: "Candidate",
+        refId: fullCandidate._id
+      });
+      console.log(`📧 Manual Assessment notification sent to: ${fullCandidate.email}`);
+    }
 
     // NOTE: Simplified version without background queue for now
     res.status(201).json({
@@ -44,6 +75,16 @@ export const getTestDetails = async (req, res) => {
     });
 
     if (!test) return res.status(404).json({ success: false, message: "No test found" });
+    res.status(200).json({ success: true, test });
+  } catch (error) {
+    res.status(500).json({ success: false, message: "Server error" });
+  }
+};
+
+export const getTestById = async (req, res) => {
+  try {
+    const test = await CandidateTest.findById(req.params.id);
+    if (!test) return res.status(404).json({ success: false, message: "Test not found" });
     res.status(200).json({ success: true, test });
   } catch (error) {
     res.status(500).json({ success: false, message: "Server error" });
@@ -104,6 +145,27 @@ export const getAssessmentDetail = async (req, res) => {
     if (!detail) return res.status(404).json({ success: false, message: "Not found" });
     res.status(200).json({ success: true, shortlisted: detail });
   } catch (error) {
+    res.status(500).json({ success: false, message: "Server error" });
+  }
+};
+
+export const getMyAssessments = async (req, res) => {
+  try {
+    if (!req.user || !req.user.id) return res.status(401).json({ success: false, message: "Unauthorized" });
+    
+    // Find Candidate by matching email of the logged in User
+    const user = await User.findById(req.user.id);
+    if (!user) return res.status(404).json({ success: false, message: "User not found" });
+
+    const candidate = await Candidate.findOne({ email: user.email });
+    if (!candidate) return res.status(404).json({ success: false, message: "Candidate profile not found" });
+
+    // Fetch tests for this candidate
+    const tests = await CandidateTest.find({ candidate_id: candidate._id }).populate("job_id");
+    
+    res.status(200).json({ success: true, count: tests.length, tests });
+  } catch (error) {
+    console.error("Get My Assessments Error:", error);
     res.status(500).json({ success: false, message: "Server error" });
   }
 };

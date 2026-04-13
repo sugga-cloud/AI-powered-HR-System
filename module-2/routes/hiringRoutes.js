@@ -5,8 +5,9 @@ import { applyToJob, shortlistCandidates, getAllCandidates, getShortlistedCandid
 import { generateJD, getAllJDs, getJDById, updateJD, deleteJD } from '../controllers/jobController.js';
 import { jdPostController } from '../controllers/jdPostController.js';
 import { scheduleInterview, getInterviews, updateInterviewStatus, submitInterviewFeedback } from '../controllers/interviewController.js';
-import { initAssessment, getTestDetails, submitAssessment, getShortlistedWithScores, getAssessmentDetail } from '../controllers/assessmentController.js';
-import { createOffer, getOffers, updateOfferStatus, createOnboardingTask, getOnboardingTasks } from '../controllers/offerController.js';
+import { initAssessment, getTestDetails, getTestById, submitAssessment, getShortlistedWithScores, getAssessmentDetail, getMyAssessments } from '../controllers/assessmentController.js';
+import { createOffer, getOffers, updateOfferStatus, createOnboardingTask, getOnboardingTasks, rejectCandidate } from '../controllers/offerController.js';
+import { authenticate } from '../middleware/authMiddleware.js';
 
 const router = Router();
 
@@ -45,13 +46,16 @@ router.post('/interviews/feedback/:id', submitInterviewFeedback);
 
 // --- Assessment ---
 router.post('/assessments/init', initAssessment);
+router.get('/assessments/my-tests', authenticate, getMyAssessments);
 router.get('/assessments/test', getTestDetails);
+router.get('/assessments/test/:id', authenticate, getTestById);
 router.post('/assessments/submit', submitAssessment);
 router.get('/assessments/shortlisted', getShortlistedWithScores);
 router.get('/assessments/shortlisted/:id', getAssessmentDetail);
 
 // --- Offers ---
 router.post('/offers/create', createOffer);
+router.post('/offers/reject', rejectCandidate);
 router.get('/offers/list', getOffers);
 router.put('/offers/status/:id', updateOfferStatus);
 router.post('/offers/onboarding/create', createOnboardingTask);

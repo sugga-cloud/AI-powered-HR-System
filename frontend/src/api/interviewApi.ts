@@ -14,7 +14,7 @@ export const interviewApi = {
     return response.data;
   },
 
-  list: async (): Promise<{ success: boolean; interviews: Interview[] }> => {
+  list: async (p0: { status?: string; role: string; }): Promise<{ success: boolean; interviews: Interview[] }> => {
     const response = await axiosClient.get("/hiring/interviews/all/all");
     return { success: true, interviews: response.data.data };
   },

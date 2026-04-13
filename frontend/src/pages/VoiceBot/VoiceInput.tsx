@@ -1,6 +1,6 @@
 import React, { useState, useRef, useEffect } from "react";
 import { io, Socket } from "socket.io-client";
-import { speak, initVoice } from "../../utils/speechService";
+import { speak, initVoice, stopSpeaking } from "../../utils/speechService";
 import {
   BarChart, Bar, LineChart, Line, PieChart, Pie, Cell,
   XAxis, YAxis, Tooltip, Legend, ResponsiveContainer
@@ -9,10 +9,9 @@ import { Mic, MicOff, Send, Bot, User, ChevronDown, Briefcase, Calendar, Clipboa
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { cn } from "@/lib/utils";
-
-const SOCKET_URL = import.meta.env.VITE_MAIN_API_URL?.replace('/api', '') || "http://localhost:5000";
 import { useAuth } from "@/hooks/useAuth";
 
+const SOCKET_URL = import.meta.env.VITE_MAIN_API_URL?.replace('/api', '') || "http://localhost:5000";
 const COLORS = ["#6366f1", "#22d3ee", "#f59e0b", "#10b981", "#f43f5e", "#a78bfa"];
 
 type Message = {
@@ -22,6 +21,43 @@ type Message = {
   timestamp: Date;
   graph?: any;
   confirmAction?: any;
+};
+
+// ── Prettier/Markdown Formatter ──
+const FormattedContent: React.FC<{ content: string }> = ({ content }) => {
+  if (!content) return null;
+  const lines = content.split('\n');
+  return (
+    <div className="space-y-1">
+      {lines.map((line, i) => {
+        const trimmed = line.trim();
+        if (!trimmed) return <div key={i} className="h-2" />;
+        
+        // Check for lists
+        if (trimmed.startsWith('- ') || trimmed.startsWith('* ')) {
+          return (
+            <div key={i} className="pl-4 flex gap-2">
+              <span className="text-primary">•</span> 
+              <span>{trimmed.substring(2)}</span>
+            </div>
+          );
+        }
+        
+        // Handle bold (**text**)
+        const parts = line.split(/(\*\*.*?\*\*)/g);
+        return (
+          <p key={i}>
+            {parts.map((part, pi) => {
+              if (part.startsWith('**') && part.endsWith('**')) {
+                return <strong key={pi} className="text-primary font-bold">{part.slice(2, -2)}</strong>;
+              }
+              return part;
+            })}
+          </p>
+        );
+      })}
+    </div>
+  );
 };
 
 const HuriaPage: React.FC = () => {
@@ -52,23 +88,30 @@ const HuriaPage: React.FC = () => {
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const sessionId = useRef(crypto.randomUUID());
 
-  // ── Scroll to bottom ───────────────────────────────────────────────────────
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
   }, [messages]);
 
-  // ── Socket Setup ───────────────────────────────────────────────────────────
   useEffect(() => {
     const socket = io(SOCKET_URL);
     socketRef.current = socket;
 
     socket.on("connect", () => {
       setStatus("Connected");
+      
+      const sessionKey = `aurion_welcome_${user?.id || user?._id || 'guest'}`;
+      const welcomeShown = sessionStorage.getItem(sessionKey);
+
       socket.emit("identify", {
         employeeId: user?.id || user?._id || "unknown",
         employeeRole: user?.role || "employee",
         contextModule: activeModule,
+        skipWelcome: !!welcomeShown,
       });
+
+      if (!welcomeShown) {
+        sessionStorage.setItem(sessionKey, "true");
+      }
     });
 
     socket.on("status", (data: any) => setStatus(data.message || "Ready"));
@@ -100,13 +143,11 @@ const HuriaPage: React.FC = () => {
     };
   }, []);
 
-  // ── Switch module ──────────────────────────────────────────────────────────
   const switchModule = (mod: string) => {
     setActiveModule(mod);
     socketRef.current?.emit("switch-module", { contextModule: mod });
   };
 
-  // ── Voice Recognition ──────────────────────────────────────────────────────
   const initRecognition = () => {
     const SR = (window as any).SpeechRecognition || (window as any).webkitSpeechRecognition;
     if (!SR) return;
@@ -114,18 +155,37 @@ const HuriaPage: React.FC = () => {
     recognition.lang = "en-IN";
     recognition.continuous = false;
     recognition.interimResults = false;
-    recognition.onstart = () => { setListening(true); startVisualizer(); };
+    recognition.onstart = () => { 
+      setListening(true); 
+      stopSpeaking();
+      startVisualizer(); 
+    };
     recognition.onend = () => { setListening(false); stopVisualizer(); };
     recognition.onresult = (event: any) => {
+      stopSpeaking();
       const text = event.results[0][0].transcript;
       sendMessage(text, "voice");
     };
     recognitionRef.current = recognition;
   };
+  
+  const handleToggleListening = () => {
+    if (!recognitionRef.current) initRecognition();
+    
+    if (listening) {
+      recognitionRef.current?.abort();
+      setListening(false);
+      stopVisualizer();
+    } else {
+      try {
+        stopSpeaking();
+        recognitionRef.current?.start();
+      } catch (err) {
+        console.warn("Recognition start error:", err);
+      }
+    }
+  };
 
-  const startListening = () => recognitionRef.current?.start();
-
-  // ── Visualizer ─────────────────────────────────────────────────────────────
   const startVisualizer = async () => {
     try {
       const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
@@ -139,7 +199,11 @@ const HuriaPage: React.FC = () => {
 
   const stopVisualizer = () => {
     cancelAnimationFrame(animRef.current);
-    audioCtxRef.current?.close();
+    if (audioCtxRef.current && audioCtxRef.current.state !== 'closed') {
+      audioCtxRef.current.close().catch(() => {});
+    }
+    audioCtxRef.current = null;
+    analyserRef.current = null;
   };
 
   const drawWave = () => {
@@ -166,7 +230,6 @@ const HuriaPage: React.FC = () => {
     draw();
   };
 
-  // ── Send message ───────────────────────────────────────────────────────────
   const sendMessage = (text: string, via: "chat" | "voice" = "chat") => {
     if (!text.trim()) return;
     const userMsg: Message = { id: crypto.randomUUID(), role: "user", content: text, timestamp: new Date() };
@@ -189,7 +252,6 @@ const HuriaPage: React.FC = () => {
     if (e.key === "Enter" && !e.shiftKey) { e.preventDefault(); sendMessage(input); }
   };
 
-  // ── Render graph ───────────────────────────────────────────────────────────
   const renderChart = (payload: any) => {
     const tooltipStyle = { backgroundColor: "#1e293b", border: "1px solid #334155", color: "#f1f5f9", borderRadius: 8 };
     if (payload.type === "bar") return (
@@ -230,7 +292,6 @@ const HuriaPage: React.FC = () => {
 
   return (
     <div className="flex flex-col h-[calc(100vh-130px)] max-w-4xl mx-auto">
-      {/* Header */}
       <div className="flex items-center justify-between mb-4">
         <div>
           <h1 className="text-xl font-bold flex items-center gap-2">
@@ -243,7 +304,6 @@ const HuriaPage: React.FC = () => {
             Status: <span className={cn("font-medium", loading ? "text-yellow-400" : "text-green-400")}>{status}</span>
           </p>
         </div>
-        {/* Module Switcher */}
         <div className="flex items-center gap-1.5 flex-wrap justify-end">
           {modules.map(m => (
             <button
@@ -262,7 +322,6 @@ const HuriaPage: React.FC = () => {
         </div>
       </div>
 
-      {/* Messages */}
       <div className="flex-1 overflow-y-auto space-y-4 pr-1 pb-2">
         {messages.length === 0 && (
           <div className="flex flex-col items-center justify-center h-full gap-4 text-center">
@@ -271,8 +330,8 @@ const HuriaPage: React.FC = () => {
             </div>
             <div>
               <p className="font-semibold">Aurion is ready</p>
-              <p className="text-sm text-muted-foreground mt-1">Type or speak a command. Try:<br />
-                <span className="italic">"Show me the hiring funnel"</span> or <span className="italic">"I need sick leave from Monday"</span>
+              <p className="text-sm text-muted-foreground mt-1 text-balance max-w-xs mx-auto">
+                Type or speak a command. Aurion will help you with HR, Project, and Hiring tasks.
               </p>
             </div>
           </div>
@@ -290,19 +349,17 @@ const HuriaPage: React.FC = () => {
               <div className={cn(
                 "rounded-2xl px-4 py-2.5 text-sm leading-relaxed",
                 msg.role === "aurion"
-                  ? "bg-card border border-border/50 rounded-tl-sm"
-                  : "bg-primary text-primary-foreground rounded-tr-sm"
+                  ? "bg-card border border-border/50 rounded-tl-sm prose prose-invert prose-sm max-w-none shadow-sm"
+                  : "bg-primary text-primary-foreground rounded-tr-sm shadow-md shadow-primary/10"
               )}>
-                {msg.content}
+                {msg.role === "aurion" ? <FormattedContent content={msg.content} /> : msg.content}
               </div>
-              {/* Inline chart */}
               {msg.graph && (
                 <div className="bg-card border border-border/50 rounded-xl p-4 w-full min-w-[340px]">
                   <p className="text-xs font-semibold mb-3 text-muted-foreground">{msg.graph.title}</p>
                   {renderChart(msg.graph)}
                 </div>
               )}
-              {/* Confirmation box */}
               {msg.confirmAction && (
                 <div className="bg-yellow-500/10 border border-yellow-500/30 rounded-xl p-3 text-xs space-y-2">
                   <p className="font-medium text-yellow-400">⚠️ Action requires your confirmation</p>
@@ -328,7 +385,7 @@ const HuriaPage: React.FC = () => {
             <div className="bg-card border border-border/50 rounded-2xl rounded-tl-sm px-4 py-3">
               <div className="flex gap-1">
                 {[0, 1, 2].map(i => (
-                  <div key={i} className="w-2 h-2 rounded-full bg-primary/60 animate-bounce" style={{ animationDelay: `${i * 0.15}s` }} />
+                  <div key={i} className="w-1.5 h-1.5 rounded-full bg-primary/60 animate-bounce" style={{ animationDelay: `${i * 0.15}s` }} />
                 ))}
               </div>
             </div>
@@ -337,14 +394,12 @@ const HuriaPage: React.FC = () => {
         <div ref={messagesEndRef} />
       </div>
 
-      {/* Visualizer Bar */}
       {listening && (
         <div className="mb-2">
           <canvas ref={canvasRef} width={600} height={50} className="w-full rounded-lg" />
         </div>
       )}
 
-      {/* Input Bar */}
       <div className="flex items-end gap-2 pt-2 border-t border-border/50">
         <textarea
           value={input}
@@ -358,9 +413,8 @@ const HuriaPage: React.FC = () => {
         <Button
           size="icon"
           variant={listening ? "destructive" : "outline"}
-          onClick={listening ? () => recognitionRef.current?.stop() : startListening}
-          className="h-11 w-11 shrink-0 rounded-xl"
-          title={listening ? "Stop listening" : "Start voice"}
+          onClick={handleToggleListening}
+          className={cn("h-11 w-11 shrink-0 rounded-xl transition-all", listening && "animate-pulse shadow-lg shadow-destructive/20")}
         >
           {listening ? <MicOff className="w-4 h-4" /> : <Mic className="w-4 h-4" />}
         </Button>

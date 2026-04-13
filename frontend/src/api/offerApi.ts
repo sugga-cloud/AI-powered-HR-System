@@ -7,6 +7,11 @@ export const offerApi = {
     return response.data;
   },
 
+  reject: async (data: { candidate_id: string; job_id: string }): Promise<{ success: boolean; message: string }> => {
+    const response = await axiosClient.post('/hiring/offers/reject', data);
+    return response.data;
+  },
+
   list: async (): Promise<{ success: boolean; offers: Offer[] }> => {
     const response = await axiosClient.get('/hiring/offers/list');
     return response.data;

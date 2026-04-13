@@ -12,4 +12,7 @@ router.post('/:id/milestones', projectCtrl.addMilestone);
 router.patch('/:id/milestones/:milestoneId', projectCtrl.updateMilestone);
 router.post('/:id/feedback', projectCtrl.submitFeedback);
 
+router.patch('/:id', projectCtrl.updateProject);
+router.delete('/:id', projectCtrl.deleteProject);
+
 export default router;

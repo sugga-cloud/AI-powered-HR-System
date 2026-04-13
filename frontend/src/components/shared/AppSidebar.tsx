@@ -11,6 +11,7 @@ import {
   FolderKanban,
   CalendarOff,
   CalendarCheck,
+  Mail,
 } from "lucide-react";
 import {
   Sidebar,
@@ -46,9 +47,8 @@ export function AppSidebar() {
 
   const workforceItems = [
     { title: "Leave Management", url: "/dashboard/leave", icon: CalendarCheck },
-    { title: "My Leaves", url: "/dashboard/my-leaves", icon: CalendarOff },
     { title: "Projects", url: "/dashboard/projects", icon: FolderKanban },
-    { title: "Analytics", url: "/dashboard/analytics", icon: BarChart2 },
+    { title: "Mail Log", url: "/dashboard/mail-log", icon: Mail },
   ];
 
   const candidateMenuItems = [
