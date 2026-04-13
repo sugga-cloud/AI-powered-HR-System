@@ -87,7 +87,7 @@ const JobDetails = () => {
           <div>
             <h2 className="text-lg font-semibold mb-2">Required Skills</h2>
             <div className="flex flex-wrap gap-2">
-              {aiResponse.skills.map((skill, index) => (
+              {(aiResponse.skills || []).map((skill, index) => (
                 <span
                   key={index}
                   className="px-3 py-1 text-sm bg-indigo-100 text-indigo-700 rounded-full"
@@ -102,7 +102,7 @@ const JobDetails = () => {
           <div>
             <h2 className="text-lg font-semibold mb-2">Key Highlights</h2>
             <ul className="list-disc list-inside text-gray-700">
-              {aiResponse.aiMetadata.highlights.map((item, index) => (
+              {(aiResponse.aiMetadata?.highlights || []).map((item, index) => (
                 <li key={index}>{item}</li>
               ))}
             </ul>
@@ -110,7 +110,7 @@ const JobDetails = () => {
 
           {/* Hashtags */}
           <div className="flex flex-wrap gap-2">
-            {aiResponse.aiMetadata.hashtags.map((tag, index) => (
+            {(aiResponse.aiMetadata?.hashtags || []).map((tag, index) => (
               <span
                 key={index}
                 className="text-sm text-purple-600 font-medium"

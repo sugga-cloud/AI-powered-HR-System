@@ -17,7 +17,7 @@ import JDPost from "./pages/dashboard/jd/JDPost";
 import CandidateList from "./pages/dashboard/resume/CandidateList";
 import AssessmentList from "./pages/dashboard/assessment/AssessmentList";
 import AssessmentDetail from "./pages/dashboard/assessment/AssessmentDetail";
-// import InterviewList from "./pages/dashboard/interview/InterviewList";
+import InterviewList from "./pages/dashboard/interview/InterviewList";
 import OfferList from "./pages/dashboard/offer/OfferList";
 import CandidateDashboard from "./pages/candidate/CandidateDashboard";
 import TestScreen from "./pages/candidate/TestScreen";
@@ -75,7 +75,7 @@ const AppContent = () => {
                 <Route path="resume" element={<CandidateList />} />
                 <Route path="assessment" element={<AssessmentList />} />
                 <Route path="assessment/:id" element={<AssessmentDetail />} />
-                {/* <Route path="interview" element={<InterviewList />} /> */}
+                <Route path="interview" element={<InterviewList />} />
                 <Route path="offer" element={<OfferList />} />
                 <Route path="leave" element={<LeaveManagement />} />
                 <Route path="analytics" element={<AnalyticsDashboard />} />

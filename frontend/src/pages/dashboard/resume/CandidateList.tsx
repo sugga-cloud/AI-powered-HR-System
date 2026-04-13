@@ -318,14 +318,14 @@ export default function CandidateList() {
                           <>
                             {candidateData.skills && candidateData.skills.length > 0 ? (
                               <div className="flex flex-wrap gap-1">
-                                {candidateData.skills.slice(0, 3).map((skill, idx) => (
+                            {(candidateData.skills || []).slice(0, 3).map((skill, idx) => (
                                   <Badge key={idx} variant="outline" className="text-xs">
                                     {skill}
                                   </Badge>
                                 ))}
-                                {candidateData.skills.length > 3 && (
+                                {(candidateData.skills || []).length > 3 && (
                                   <Badge variant="outline" className="text-xs bg-muted">
-                                    +{candidateData.skills.length - 3}
+                                    +{(candidateData.skills || []).length - 3}
                                   </Badge>
                                 )}
                               </div>
@@ -472,7 +472,7 @@ export default function CandidateList() {
                     <h3 className="font-semibold">Skills</h3>
                   </div>
                   <div className="flex flex-wrap gap-2">
-                    {selectedCandidate.skills.map((skill, idx) => (
+                    {(selectedCandidate.skills || []).map((skill, idx) => (
                       <Badge key={idx} variant="secondary">
                         {skill}
                       </Badge>
@@ -489,7 +489,7 @@ export default function CandidateList() {
                     <h3 className="font-semibold">Experience</h3>
                   </div>
                   <div className="space-y-3">
-                    {selectedCandidate.experience.map((exp, idx) => (
+                    {(selectedCandidate.experience || []).map((exp, idx) => (
                       <div key={idx} className="border-l-2 border-primary pl-4">
                         <div className="font-medium">{exp.role}</div>
                         <div className="text-sm text-muted-foreground">{exp.company}</div>
@@ -509,7 +509,7 @@ export default function CandidateList() {
                     <h3 className="font-semibold">Education</h3>
                   </div>
                   <div className="space-y-3">
-                    {selectedCandidate.education.map((edu, idx) => (
+                    {(selectedCandidate.education || []).map((edu, idx) => (
                       <div key={idx} className="border-l-2 border-blue-500 pl-4">
                         <div className="font-medium">{edu.degree} in {edu.fieldOfStudy}</div>
                         <div className="text-sm text-muted-foreground">{edu.institution}</div>
@@ -545,9 +545,9 @@ export default function CandidateList() {
                           )}
                         </div>
                         <p className="text-sm text-muted-foreground mt-1">{project.description}</p>
-                        {project.technologies && project.technologies.length > 0 && (
+                        {(project.technologies || []).length > 0 && (
                           <div className="flex flex-wrap gap-1 mt-2">
-                            {project.technologies.map((tech, idx) => (
+                            {(project.technologies || []).map((tech, idx) => (
                               <Badge key={idx} variant="outline" className="text-xs">
                                 {tech}
                               </Badge>

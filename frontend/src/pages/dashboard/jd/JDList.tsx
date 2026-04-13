@@ -141,14 +141,14 @@ export default function JDList() {
                     <TableCell>{getApprovalBadge(jd.approvalStatus)}</TableCell>
                     <TableCell>
                       <div className="flex flex-wrap gap-1">
-                        {jd.aiResponse.skills.slice(0, 3).map((skill, idx) => (
+                        {(jd.aiResponse.skills || []).slice(0, 3).map((skill, idx) => (
                           <Badge key={idx} variant="outline" className="text-xs">
                             {skill}
                           </Badge>
                         ))}
-                        {jd.aiResponse.skills.length > 3 && (
+                        {(jd.aiResponse.skills || []).length > 3 && (
                           <Badge variant="outline" className="text-xs">
-                            +{jd.aiResponse.skills.length - 3}
+                            +{(jd.aiResponse.skills || []).length - 3}
                           </Badge>
                         )}
                       </div>
