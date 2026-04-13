@@ -2,7 +2,7 @@ import JD from "../models/jdModel.js";
 import axios from "axios";
 
 // const DEMO_PORTAL_URL = "https://aurion-jobs.onrender.com/api/external/jobs";
-const DEMO_PORTAL_URL = "http://localhost:4000/api/external/jobs";
+const DEMO_PORTAL_URL = "https://aurion-jobs.onrender.com/api/external/jobs";
 const DEMO_PORTAL_KEY = "sk_demo_portal_12345";
 // const DEMO_PORTAL_URL = "http://localhost:4000/api/external/jobs";
 
