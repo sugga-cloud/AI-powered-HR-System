@@ -54,7 +54,7 @@ const jobs = database.jobs;
 const applications = database.applications;
 
 const REQUIRED_API_KEY = "sk_demo_portal_12345";
-const AURION_API_URL = "http://localhost:5000/api/hiring";
+const AURION_API_URL = "https://backend-1s6m.onrender.com/api/hiring";
 
 // Middleware to check API key
 const checkApiKey = (req, res, next) => {
