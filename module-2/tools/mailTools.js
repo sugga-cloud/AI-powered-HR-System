@@ -1,5 +1,5 @@
 import mongoose from 'mongoose';
-import { Resend } from 'resend';
+import * as Brevo from '@getbrevo/brevo';
 import dotenv from 'dotenv';
 dotenv.config();
 
@@ -7,9 +7,13 @@ const getModel = (name) => {
   try { return mongoose.model(name); } catch { return null; }
 };
 
-// ─── Resend Configuration ────────────────────────────────────────────────────
-const resend = process.env.RESEND_API_KEY ? new Resend(process.env.RESEND_API_KEY) : null;
-const FROM_EMAIL = process.env.MAIL_FROM || "onboarding@resend.dev";
+// ─── Brevo Configuration ─────────────────────────────────────────────────────
+const apiInstance = new Brevo.TransactionalEmailsApi();
+if (process.env.BREVO_API_KEY) {
+  apiInstance.setApiKey(Brevo.TransactionalEmailsApiApiKeys.apiKey, process.env.BREVO_API_KEY);
+}
+const FROM_EMAIL = process.env.MAIL_FROM || "onboarding@brevo.com";
+const brevoEnabled = !!process.env.BREVO_API_KEY;
 
 
 // ─── Internal helper: emit to socket ─────────────────────────────────────────
@@ -31,25 +35,27 @@ export const sendMail = async ({ to, subject, body, toEmployeeId = null, trigger
     let errorDetail = null;
 
     // Check if we have credentials to send a real mail
-    if (resend) {
+    if (brevoEnabled) {
       try {
-        const { data, error } = await resend.emails.send({
-          from: FROM_EMAIL,
-          to,
-          subject,
-          [isHtml ? 'html' : 'text']: body,
-        });
-
-        if (error) {
-          throw new Error(error.message);
+        const sendSmtpEmail = new Brevo.SendSmtpEmail();
+        sendSmtpEmail.subject = subject;
+        sendSmtpEmail.sender = { "name": "Aurion AI", "email": FROM_EMAIL };
+        sendSmtpEmail.to = [{ "email": to }];
+        
+        if (isHtml) {
+          sendSmtpEmail.htmlContent = body;
+        } else {
+          sendSmtpEmail.textContent = body;
         }
 
+        const data = await apiInstance.sendTransacEmail(sendSmtpEmail);
+        
         status = "sent";
-        console.log(`📧 Real Mail sent via Resend to ${to}: ${subject}`);
+        console.log(`📧 Real Mail sent via Brevo to ${to}: ${subject}`);
       } catch (err) {
-        console.error("❌ Resend Send failed, falling back to simulation:", err.message);
+        console.error("❌ Brevo Send failed, falling back to simulation:", err.message);
         status = "failed";
-        errorDetail = err.message;
+        errorDetail = err.message || JSON.stringify(err);
       }
     }
 
